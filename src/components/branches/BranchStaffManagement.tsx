@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Users, 
   User, 
@@ -31,6 +31,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator
 } from '@/components/ui/dropdown-menu';
 import { useBranches } from '@/hooks/useBranches';
 import { useBranchUsers } from '@/hooks/useBranchUsers';
@@ -188,7 +189,7 @@ export default function BranchStaffManagement({ branchId }: BranchStaffManagemen
                 key={user.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow"
+                className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200"
               >
                 <div className="p-6">
                   <div className="flex items-start justify-between">
@@ -224,6 +225,7 @@ export default function BranchStaffManagement({ branchId }: BranchStaffManagemen
                           <Edit className="h-4 w-4 mr-2" />
                           Edit
                         </DropdownMenuItem>
+                        <DropdownMenuSeparator />
                         <DropdownMenuItem 
                           onClick={() => setStaffToDelete(user.id)}
                           className="text-red-600"
