@@ -34,9 +34,11 @@ export function useVehicles(branchId: string | null = null) {
       setLoading(true);
       setError(null);
 
-      // Validate branch ID
+      // If branchId is provided but invalid, return empty array
       if (branchId && !isValidUUID(branchId)) {
-        throw new Error('Invalid branch ID format');
+        console.log('Invalid branch ID, returning empty array:', branchId);
+        setVehicles([]);
+        return;
       }
 
       console.log('Loading vehicles, branchId:', branchId);

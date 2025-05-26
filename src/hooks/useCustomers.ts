@@ -2,6 +2,14 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import type { Customer } from '@/types';
 
+// UUID validation regex
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+const isValidUUID = (uuid: string | null): boolean => {
+  if (!uuid) return false;
+  return UUID_REGEX.test(uuid);
+};
+
 export function useCustomers(branchId: string | null = null) {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
@@ -11,6 +19,14 @@ export function useCustomers(branchId: string | null = null) {
     try {
       setLoading(true);
       setError(null);
+
+      // If branchId is provided but invalid, return empty array
+      if (branchId && !isValidUUID(branchId)) {
+        console.log('Invalid branch ID, returning empty array:', branchId);
+        setCustomers([]);
+        return;
+      }
+
       console.log('Loading customers, branchId:', branchId);
 
       let query = supabase
@@ -52,6 +68,10 @@ export function useCustomers(branchId: string | null = null) {
 
   const createCustomer = async (customerData: Omit<Customer, 'id' | 'created_at' | 'updated_at'>) => {
     try {
+      if (customerData.branch_id && !isValidUUID(customerData.branch_id)) {
+        throw new Error('Invalid branch ID format');
+      }
+
       console.log('Creating customer:', customerData);
       
       const { data, error: createError } = await supabase
@@ -83,6 +103,14 @@ export function useCustomers(branchId: string | null = null) {
 
   const updateCustomer = async (id: string, updates: Partial<Customer>) => {
     try {
+      if (!isValidUUID(id)) {
+        throw new Error('Invalid customer ID format');
+      }
+
+      if (updates.branch_id && !isValidUUID(updates.branch_id)) {
+        throw new Error('Invalid branch ID format');
+      }
+
       console.log(`Updating customer ${id}:`, updates);
       
       const { data, error: updateError } = await supabase
@@ -118,6 +146,10 @@ export function useCustomers(branchId: string | null = null) {
 
   const deleteCustomer = async (id: string) => {
     try {
+      if (!isValidUUID(id)) {
+        throw new Error('Invalid customer ID format');
+      }
+
       console.log(`Deleting customer ${id}`);
       
       // First check if customer has bookings
