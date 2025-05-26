@@ -2,10 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import NewBookingForm from './NewBookingForm';
 import BookingFormSkeleton from './BookingFormSkeleton';
+import { useBookings } from '@/hooks/useBookings';
 
 const LazyBook = () => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const { createBooking } = useBookings();
 
   useEffect(() => {
     const timer = setTimeout(() => setLoading(false), 1000);
@@ -19,13 +21,7 @@ const LazyBook = () => {
       onClose={() => navigate('/dashboard/bookings')}
       onSubmit={async (data) => {
         try {
-          const booking = {
-            id: Math.random().toString(36).substring(2, 15),
-            ...data,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-            status: 'booked',
-          };
+          const booking = await createBooking(data);
           return booking;
         } catch (error) {
           console.error('Error creating booking:', error);

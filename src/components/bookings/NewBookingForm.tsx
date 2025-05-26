@@ -863,7 +863,7 @@ export default function NewBookingForm({ onSubmit, onClose }: NewBookingFormProp
                             <span className="text-gray-600">Unloading Charges:</span>
                             <span className="font-medium">₹{(watchUnloadingCharges || 0).toFixed(2)}</span>
                           </div>
-                          {/* {watchInsuranceCharge > 0 && (
+                          {watchInsuranceCharge > 0 && (
                             <div className="flex items-center justify-between mb-2">
                               <span className="text-gray-600">Insurance Charges:</span>
                               <span className="font-medium">₹{(watchInsuranceCharge || 0).toFixed(2)}</span>
@@ -874,7 +874,7 @@ export default function NewBookingForm({ onSubmit, onClose }: NewBookingFormProp
                               <span className="text-gray-600">Packaging Charges:</span>
                               <span className="font-medium">₹{(watchPackagingCharge || 0).toFixed(2)}</span>
                             </div>
-                          )} */}
+                          )}
                           <div className="flex items-center justify-between pt-2 border-t border-gray-200 mt-2">
                             <span className="font-medium text-gray-900">Total Amount:</span>
                             <span className="font-bold text-lg text-blue-600">₹{totalAmount.toFixed(2)}</span>

@@ -41,7 +41,7 @@ export default function BranchSelector({ value, onChange, className = '' }: Bran
   const filteredBranches = branches.filter(branch => 
     branch.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     branch.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    branch.state.toLowerCase().includes(searchQuery.toLowerCase())
+    branch.state?.toLowerCase().includes(searchQuery.toLowerCase())
   );
   
   const handleSelect = (branchId: string) => {
@@ -60,7 +60,7 @@ export default function BranchSelector({ value, onChange, className = '' }: Bran
         <div className="flex items-center gap-2">
           <Building2 className="h-4 w-4 text-gray-500" />
           {selectedBranch ? (
-            <span>{selectedBranch.name}</span>
+            <span>{selectedBranch.name} - {selectedBranch.city}</span>
           ) : loading ? (
             <span>Loading branches...</span>
           ) : (
@@ -77,7 +77,7 @@ export default function BranchSelector({ value, onChange, className = '' }: Bran
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={{ duration: 0.15 }}
-            className="absolute z-10 mt-1 w-full bg-white rounded-md shadow-lg border border-gray-200 overflow-hidden"
+            className="absolute z-50 w-full mt-1 bg-white rounded-md shadow-lg border border-gray-200 overflow-hidden"
           >
             <div className="p-2">
               <div className="relative">
