@@ -165,6 +165,7 @@ export default function BookingList() {
     }
   };
 
+  // Apply filters and sorting
   const filteredBookings = React.useMemo(() => {
     return bookings.filter(booking => {
       // Safely access nested properties

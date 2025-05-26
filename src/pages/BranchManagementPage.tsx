@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Building2, ArrowLeft, Users, Truck, Map } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -16,11 +16,11 @@ export default function BranchManagementPage() {
   const [selectedBranch, setSelectedBranch] = useState<string | null>(null);
   const navigate = useNavigate();
   const { getCurrentUserBranch } = useAuth();
-  const { branches } = useBranches();
+  const { branches, loading: branchesLoading } = useBranches();
   const userBranch = getCurrentUserBranch();
   
   // Set user's branch as default selected branch
-  React.useEffect(() => {
+  useEffect(() => {
     if (userBranch && !selectedBranch) {
       setSelectedBranch(userBranch.id);
     } else if (branches.length > 0 && !selectedBranch) {
@@ -92,47 +92,19 @@ export default function BranchManagementPage() {
         </div>
         
         <TabsContent value="dashboard" className="mt-0">
-          {selectedBranch && <BranchDashboard />}
-          {!selectedBranch && (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
-              <Building2 className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900">No Branch Selected</h3>
-              <p className="text-gray-500 mt-2">Please select a branch to view its dashboard</p>
-            </div>
-          )}
+          <BranchDashboard />
         </TabsContent>
         
         <TabsContent value="operations" className="mt-0">
-          {selectedBranch && <BranchOperations />}
-          {!selectedBranch && (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
-              <Truck className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900">No Branch Selected</h3>
-              <p className="text-gray-500 mt-2">Please select a branch to view its operations</p>
-            </div>
-          )}
+          <BranchOperations />
         </TabsContent>
         
         <TabsContent value="transfers" className="mt-0">
-          {selectedBranch && <BranchTransferForm />}
-          {!selectedBranch && (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
-              <Map className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900">No Branch Selected</h3>
-              <p className="text-gray-500 mt-2">Please select a branch to manage transfers</p>
-            </div>
-          )}
+          <BranchTransferForm />
         </TabsContent>
         
         <TabsContent value="staff" className="mt-0">
-          {selectedBranch && <BranchStaffManagement branchId={selectedBranch} />}
-          {!selectedBranch && (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
-              <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900">No Branch Selected</h3>
-              <p className="text-gray-500 mt-2">Please select a branch to manage staff</p>
-            </div>
-          )}
+          <BranchStaffManagement branchId={selectedBranch} />
         </TabsContent>
       </Tabs>
     </div>

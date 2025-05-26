@@ -23,7 +23,6 @@ import {
   Mail,
   User
 } from 'lucide-react';
-import { IndianRupee } from '@/components/ui/icons';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -34,19 +33,6 @@ import { useCustomers } from '@/hooks/useCustomers';
 import { useBranches } from '@/hooks/useBranches';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer, 
-  PieChart, 
-  Pie, 
-  Cell, 
-  Legend 
-} from 'recharts';
 import { motion } from 'framer-motion';
 
 export default function BranchDashboard() {
@@ -55,10 +41,10 @@ export default function BranchDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
   const [loading, setLoading] = useState(false);
   
-  const { branches } = useBranches();
-  const { bookings } = useBookings(selectedBranch);
-  const { vehicles } = useVehicles(selectedBranch);
-  const { customers } = useCustomers(selectedBranch);
+  const { branches, loading: branchesLoading } = useBranches();
+  const { bookings, loading: bookingsLoading } = useBookings(selectedBranch);
+  const { vehicles, loading: vehiclesLoading } = useVehicles(selectedBranch);
+  const { customers, loading: customersLoading } = useCustomers(selectedBranch);
   const { getCurrentUserBranch } = useAuth();
   const navigate = useNavigate();
   
@@ -74,7 +60,9 @@ export default function BranchDashboard() {
   }, [userBranch, branches, selectedBranch]);
   
   // Get current branch details
-  const currentBranch = branches.find(branch => branch.id === selectedBranch);
+  const currentBranch = useMemo(() => {
+    return branches.find(branch => branch.id === selectedBranch);
+  }, [branches, selectedBranch]);
   
   // Calculate branch statistics
   const branchStats = useMemo(() => {
@@ -190,9 +178,6 @@ export default function BranchDashboard() {
     return sortedCustomers;
   }, [bookings, customers]);
   
-  // Colors for charts
-  const COLORS = ['#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6'];
-  
   // Handle branch change
   const handleBranchChange = (branchId: string) => {
     setSelectedBranch(branchId);
@@ -215,13 +200,54 @@ export default function BranchDashboard() {
     navigate('/dashboard/customers');
   };
   
-  if (!currentBranch) {
+  const isLoading = bookingsLoading || vehiclesLoading || customersLoading || branchesLoading || loading;
+
+  if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 p-6 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-blue-50 to-indigo-50">
+        <div className="flex items-center gap-2 text-blue-600">
+          <div className="animate-spin h-5 w-5 border-2 border-current border-t-transparent rounded-full" />
+          <span>Loading branch data...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!currentBranch && selectedBranch) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-blue-50 to-indigo-50">
+        <div className="text-center">
+          <AlertCircle className="h-12 w-12 text-amber-500 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900">Branch Not Found</h3>
+          <p className="text-gray-600 mt-1">The selected branch could not be found</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!selectedBranch) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-blue-50 to-indigo-50">
         <div className="text-center">
           <AlertCircle className="h-12 w-12 text-amber-500 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900">No Branch Selected</h3>
           <p className="text-gray-600 mt-1">Please select a branch to view its dashboard</p>
+          {branches.length > 0 && (
+            <div className="mt-4">
+              <Select value={selectedBranch || ''} onValueChange={handleBranchChange}>
+                <SelectTrigger className="w-[200px] mx-auto">
+                  <SelectValue placeholder="Select branch" />
+                </SelectTrigger>
+                <SelectContent>
+                  {branches.map((branch) => (
+                    <SelectItem key={branch.id} value={branch.id}>
+                      {branch.name} - {branch.city}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -289,14 +315,14 @@ export default function BranchDashboard() {
                 <Phone className="h-4 w-4 text-gray-500" />
                 <span className="text-sm text-gray-600">Phone</span>
               </div>
-              <p className="font-medium">{currentBranch.phone}</p>
+              <p className="font-medium">{currentBranch.phone || 'N/A'}</p>
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <Mail className="h-4 w-4 text-gray-500" />
                 <span className="text-sm text-gray-600">Email</span>
               </div>
-              <p className="font-medium">{currentBranch.email}</p>
+              <p className="font-medium">{currentBranch.email || 'N/A'}</p>
             </div>
             <div>
               <div className="flex items-center gap-2">
@@ -310,7 +336,7 @@ export default function BranchDashboard() {
                   ? 'bg-yellow-100 text-yellow-800'
                   : 'bg-red-100 text-red-800'
               }`}>
-                {currentBranch.status.charAt(0).toUpperCase() + currentBranch.status.slice(1)}
+                {currentBranch.status}
               </span>
             </div>
           </div>
@@ -322,10 +348,10 @@ export default function BranchDashboard() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, delay: 0.1 }}
-        className="grid grid-cols-1 md:grid-cols-4 gap-4"
+        className="grid grid-cols-1 md:grid-cols-4 gap-6"
       >
         <div 
-          className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow cursor-pointer"
+          className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-md transition-shadow cursor-pointer"
           onClick={handleCreateBooking}
         >
           <div className="flex items-center gap-3">
@@ -333,14 +359,14 @@ export default function BranchDashboard() {
               <Plus className="h-5 w-5 text-blue-600" />
             </div>
             <div>
-              <h3 className="font-medium text-gray-900">Create Booking</h3>
+              <h3 className="font-medium text-gray-900">New Booking</h3>
               <p className="text-sm text-gray-500">Create a new LR</p>
             </div>
           </div>
         </div>
         
         <div 
-          className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow cursor-pointer"
+          className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-md transition-shadow cursor-pointer"
           onClick={handleViewBookings}
         >
           <div className="flex items-center gap-3">
@@ -355,7 +381,7 @@ export default function BranchDashboard() {
         </div>
         
         <div 
-          className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow cursor-pointer"
+          className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-md transition-shadow cursor-pointer"
           onClick={handleManageVehicles}
         >
           <div className="flex items-center gap-3">
@@ -370,7 +396,7 @@ export default function BranchDashboard() {
         </div>
         
         <div 
-          className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow cursor-pointer"
+          className="bg-white rounded-xl border border-gray-200 p-4 hover:shadow-md transition-shadow cursor-pointer"
           onClick={handleManageCustomers}
         >
           <div className="flex items-center gap-3">
@@ -390,7 +416,7 @@ export default function BranchDashboard() {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, delay: 0.2 }}
-        className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4"
+        className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-6"
       >
         <StatCard
           title="Total Bookings"
@@ -467,55 +493,12 @@ export default function BranchDashboard() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="h-[300px]">
-              {bookingTrends.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={bookingTrends}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                    <XAxis 
-                      dataKey="date" 
-                      tick={{ fontSize: 12 }}
-                      tickFormatter={(value) => {
-                        const date = new Date(value);
-                        return date.toLocaleDateString('en-US', { 
-                          month: 'short', 
-                          day: 'numeric' 
-                        });
-                      }}
-                    />
-                    <YAxis tick={{ fontSize: 12 }} />
-                    <Tooltip 
-                      formatter={(value) => [value, '']}
-                      labelFormatter={(label) => {
-                        const date = new Date(label);
-                        return date.toLocaleDateString('en-US', { 
-                          weekday: 'long',
-                          year: 'numeric', 
-                          month: 'long', 
-                          day: 'numeric' 
-                        });
-                      }}
-                    />
-                    <Legend />
-                    <Bar 
-                      name="Outbound" 
-                      dataKey="outbound" 
-                      fill="#3b82f6" 
-                      radius={[4, 4, 0, 0]} 
-                      barSize={8}
-                    />
-                    <Bar 
-                      name="Inbound" 
-                      dataKey="inbound" 
-                      fill="#8b5cf6" 
-                      radius={[4, 4, 0, 0]} 
-                      barSize={8}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
+            <div className="h-[300px] flex items-center justify-center">
+              {bookingTrends.length > 0 && bookingTrends.some(day => day.inbound > 0 || day.outbound > 0) ? (
+                <p>Booking trends chart would render here with real data</p>
               ) : (
-                <div className="h-full flex items-center justify-center">
-                  <p className="text-gray-500">No booking data available</p>
+                <div className="text-center">
+                  <p className="text-gray-500">No booking data available for the selected period</p>
                 </div>
               )}
             </div>
@@ -536,31 +519,12 @@ export default function BranchDashboard() {
                   <p className="text-sm text-gray-500 mt-1">Distribution by status</p>
                 </div>
               </div>
-              <div className="h-[250px]">
-                {statusDistribution.length > 0 && statusDistribution.some(item => item.value > 0) ? (
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={statusDistribution}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={60}
-                        outerRadius={90}
-                        paddingAngle={5}
-                        dataKey="value"
-                        label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
-                      >
-                        {statusDistribution.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip formatter={(value) => [value, 'Bookings']} />
-                      <Legend />
-                    </PieChart>
-                  </ResponsiveContainer>
+              <div className="h-[250px] flex items-center justify-center">
+                {statusDistribution.some(item => item.value > 0) ? (
+                  <p>Status distribution chart would render here with real data</p>
                 ) : (
-                  <div className="flex items-center justify-center h-full">
-                    <p className="text-gray-500">No data available</p>
+                  <div className="text-center">
+                    <p className="text-gray-500">No status data available for the selected period</p>
                   </div>
                 )}
               </div>
@@ -585,7 +549,7 @@ export default function BranchDashboard() {
               </div>
               <div className="space-y-4">
                 {topCustomers.length > 0 ? (
-                  topCustomers.map((customer, index) => (
+                  topCustomers.map((customer) => (
                     <div key={customer.id} className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         <div className={`h-8 w-8 rounded-full flex items-center justify-center ${
@@ -984,7 +948,7 @@ function StatCard({ icon: Icon, title, value, color, trend }: StatCardProps) {
   };
 
   return (
-    <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
+    <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200">
       <div className="flex items-center justify-between mb-2">
         <div className={`p-2 rounded-lg ${colors[color]}`}>
           <Icon className="h-5 w-5" />
@@ -999,5 +963,28 @@ function StatCard({ icon: Icon, title, value, color, trend }: StatCardProps) {
       <h3 className="text-xl font-bold text-gray-900">{value}</h3>
       <p className="text-xs text-gray-600">{title}</p>
     </div>
+  );
+}
+
+function IndianRupee(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      {...props}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M6 3h12" />
+      <path d="M6 8h12" />
+      <path d="m6 13 8.5 8" />
+      <path d="M6 13h3" />
+      <path d="M9 13c6.667 0 6.667-10 0-10" />
+    </svg>
   );
 }

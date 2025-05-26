@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Building2, 
   Package, 
@@ -17,7 +17,11 @@ import {
   Plus,
   FileText,
   BarChart3,
-  Printer
+  Printer,
+  MapPin,
+  Phone,
+  Mail,
+  User
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -37,15 +41,15 @@ export default function BranchOperations() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   
-  const { branches } = useBranches();
-  const { bookings } = useBookings(selectedBranch);
+  const { branches, loading: branchesLoading } = useBranches();
+  const { bookings, loading: bookingsLoading } = useBookings(selectedBranch);
   const { getCurrentUserBranch } = useAuth();
   const navigate = useNavigate();
   
   const userBranch = getCurrentUserBranch();
   
   // Set user's branch as default selected branch
-  React.useEffect(() => {
+  useEffect(() => {
     if (userBranch && !selectedBranch) {
       setSelectedBranch(userBranch.id);
     } else if (branches.length > 0 && !selectedBranch) {
@@ -54,7 +58,9 @@ export default function BranchOperations() {
   }, [userBranch, branches, selectedBranch]);
   
   // Get current branch details
-  const currentBranch = branches.find(branch => branch.id === selectedBranch);
+  const currentBranch = React.useMemo(() => {
+    return branches.find(branch => branch.id === selectedBranch);
+  }, [branches, selectedBranch]);
   
   // Filter bookings based on tab, search, and filters
   const filteredBookings = React.useMemo(() => {
@@ -110,7 +116,7 @@ export default function BranchOperations() {
       return true;
     });
   }, [bookings, selectedBranch, activeTab, searchQuery, statusFilter, dateFilter]);
-  
+
   // Calculate summary statistics
   const summary = React.useMemo(() => {
     const total = filteredBookings.length;
@@ -138,13 +144,54 @@ export default function BranchOperations() {
     window.print();
   };
   
-  if (!currentBranch) {
+  const isLoading = bookingsLoading || branchesLoading;
+
+  if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 p-6 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-blue-50 to-indigo-50">
+        <div className="flex items-center gap-2 text-blue-600">
+          <div className="animate-spin h-5 w-5 border-2 border-current border-t-transparent rounded-full" />
+          <span>Loading branch data...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!currentBranch && selectedBranch) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-blue-50 to-indigo-50">
+        <div className="text-center">
+          <AlertCircle className="h-12 w-12 text-amber-500 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900">Branch Not Found</h3>
+          <p className="text-gray-600 mt-1">The selected branch could not be found</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!selectedBranch) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-blue-50 to-indigo-50">
         <div className="text-center">
           <AlertCircle className="h-12 w-12 text-amber-500 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900">No Branch Selected</h3>
           <p className="text-gray-600 mt-1">Please select a branch to view its operations</p>
+          {branches.length > 0 && (
+            <div className="mt-4">
+              <Select value={selectedBranch || ''} onValueChange={handleBranchChange}>
+                <SelectTrigger className="w-[200px] mx-auto">
+                  <SelectValue placeholder="Select branch" />
+                </SelectTrigger>
+                <SelectContent>
+                  {branches.map((branch) => (
+                    <SelectItem key={branch.id} value={branch.id}>
+                      {branch.name} - {branch.city}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -183,7 +230,7 @@ export default function BranchOperations() {
       </div>
       
       {/* Branch Info Card */}
-      <motion.div
+      <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
@@ -220,7 +267,7 @@ export default function BranchOperations() {
       </motion.div>
       
       {/* Operations Summary */}
-      <motion.div
+      <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, delay: 0.1 }}
@@ -233,6 +280,9 @@ export default function BranchOperations() {
           </div>
           <p className="text-2xl font-bold text-gray-900 mt-2">{summary.total}</p>
           <p className="text-xs text-gray-500">Shipments</p>
+          <div className="mt-2 h-1 w-full bg-gray-100 rounded-full overflow-hidden">
+            <div className="h-full bg-blue-500 rounded-full" style={{ width: '100%' }}></div>
+          </div>
         </div>
         
         <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
@@ -242,6 +292,9 @@ export default function BranchOperations() {
           </div>
           <p className="text-2xl font-bold text-yellow-600 mt-2">{summary.booked}</p>
           <p className="text-xs text-gray-500">Awaiting dispatch</p>
+          <div className="mt-2 h-1 w-full bg-gray-100 rounded-full overflow-hidden">
+            <div className="h-full bg-yellow-500 rounded-full" style={{ width: `${summary.total ? (summary.booked / summary.total) * 100 : 0}%` }}></div>
+          </div>
         </div>
         
         <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
@@ -251,6 +304,9 @@ export default function BranchOperations() {
           </div>
           <p className="text-2xl font-bold text-blue-600 mt-2">{summary.inTransit}</p>
           <p className="text-xs text-gray-500">On the way</p>
+          <div className="mt-2 h-1 w-full bg-gray-100 rounded-full overflow-hidden">
+            <div className="h-full bg-blue-500 rounded-full" style={{ width: `${summary.total ? (summary.inTransit / summary.total) * 100 : 0}%` }}></div>
+          </div>
         </div>
         
         <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
@@ -260,6 +316,9 @@ export default function BranchOperations() {
           </div>
           <p className="text-2xl font-bold text-green-600 mt-2">{summary.delivered}</p>
           <p className="text-xs text-gray-500">Completed</p>
+          <div className="mt-2 h-1 w-full bg-gray-100 rounded-full overflow-hidden">
+            <div className="h-full bg-green-500 rounded-full" style={{ width: `${summary.total ? (summary.delivered / summary.total) * 100 : 0}%` }}></div>
+          </div>
         </div>
         
         <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
@@ -269,6 +328,9 @@ export default function BranchOperations() {
           </div>
           <p className="text-2xl font-bold text-red-600 mt-2">{summary.cancelled}</p>
           <p className="text-xs text-gray-500">Cancelled</p>
+          <div className="mt-2 h-1 w-full bg-gray-100 rounded-full overflow-hidden">
+            <div className="h-full bg-red-500 rounded-full" style={{ width: `${summary.total ? (summary.cancelled / summary.total) * 100 : 0}%` }}></div>
+          </div>
         </div>
       </motion.div>
       
@@ -379,19 +441,19 @@ function BranchShipmentList({ bookings, type, onBookingClick, isPrintView = fals
         <table className="w-full">
           <thead>
             <tr className="bg-gray-50">
-              <th className="text-left text-sm font-medium text-gray-600 px-4 py-3">LR Number</th>
-              <th className="text-left text-sm font-medium text-gray-600 px-4 py-3">Date</th>
-              <th className="text-left text-sm font-medium text-gray-600 px-4 py-3">
+              <th className="text-left text-sm font-medium text-gray-600 px-6 py-4">LR Number</th>
+              <th className="text-left text-sm font-medium text-gray-600 px-6 py-4">Date</th>
+              <th className="text-left text-sm font-medium text-gray-600 px-6 py-4">
                 {type === 'inbound' ? 'From' : 'To'}
               </th>
-              <th className="text-left text-sm font-medium text-gray-600 px-4 py-3">
+              <th className="text-left text-sm font-medium text-gray-600 px-6 py-4">
                 {type === 'inbound' ? 'Sender' : 'Receiver'}
               </th>
-              <th className="text-left text-sm font-medium text-gray-600 px-4 py-3">Article</th>
-              <th className="text-left text-sm font-medium text-gray-600 px-4 py-3">Status</th>
-              <th className="text-right text-sm font-medium text-gray-600 px-4 py-3">Amount</th>
+              <th className="text-left text-sm font-medium text-gray-600 px-6 py-4">Article</th>
+              <th className="text-left text-sm font-medium text-gray-600 px-6 py-4">Status</th>
+              <th className="text-right text-sm font-medium text-gray-600 px-6 py-4">Amount</th>
               {!isPrintView && (
-                <th className="text-right text-sm font-medium text-gray-600 px-4 py-3">Actions</th>
+                <th className="text-right text-sm font-medium text-gray-600 px-6 py-4">Actions</th>
               )}
             </tr>
           </thead>
@@ -402,19 +464,19 @@ function BranchShipmentList({ bookings, type, onBookingClick, isPrintView = fals
                 className={`hover:bg-gray-50 transition-colors ${!isPrintView ? 'cursor-pointer' : ''}`}
                 onClick={!isPrintView ? () => onBookingClick(booking.id) : undefined}
               >
-                <td className="px-4 py-3">
+                <td className="px-6 py-4">
                   <span className="font-medium text-blue-600">{booking.lr_number}</span>
                 </td>
-                <td className="px-4 py-3 text-sm text-gray-600">
+                <td className="px-6 py-4 text-sm text-gray-600">
                   {new Date(booking.created_at).toLocaleDateString()}
                 </td>
-                <td className="px-4 py-3 text-sm text-gray-600">
+                <td className="px-6 py-4 text-sm text-gray-600">
                   {type === 'inbound' 
                     ? booking.from_branch_details?.name
                     : booking.to_branch_details?.name
                   }
                 </td>
-                <td className="px-4 py-3">
+                <td className="px-6 py-4">
                   <div className="text-sm">
                     <div className="font-medium">
                       {type === 'inbound' 
@@ -430,13 +492,13 @@ function BranchShipmentList({ bookings, type, onBookingClick, isPrintView = fals
                     </div>
                   </div>
                 </td>
-                <td className="px-4 py-3 text-sm text-gray-600">
+                <td className="px-6 py-4 text-sm text-gray-600">
                   <div>
                     <div>{booking.article?.name}</div>
                     <div className="text-gray-500">{booking.quantity} {booking.uom}</div>
                   </div>
                 </td>
-                <td className="px-4 py-3">
+                <td className="px-6 py-4">
                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                     booking.status === 'delivered'
                       ? 'bg-green-100 text-green-800'
@@ -449,11 +511,11 @@ function BranchShipmentList({ bookings, type, onBookingClick, isPrintView = fals
                     {booking.status.replace('_', ' ').charAt(0).toUpperCase() + booking.status.slice(1)}
                   </span>
                 </td>
-                <td className="px-4 py-3 text-right">
+                <td className="px-6 py-4 text-right">
                   <span className="font-medium">₹{booking.total_amount}</span>
                 </td>
                 {!isPrintView && (
-                  <td className="px-4 py-3 text-right">
+                  <td className="px-6 py-4 text-right">
                     <Button variant="ghost" size="sm" className="flex items-center gap-1">
                       <ChevronRight className="h-4 w-4" />
                       <span className="hidden md:inline">View</span>
@@ -465,7 +527,7 @@ function BranchShipmentList({ bookings, type, onBookingClick, isPrintView = fals
             
             {bookings.length === 0 && (
               <tr>
-                <td colSpan={isPrintView ? 7 : 8} className="px-4 py-8 text-center text-gray-500">
+                <td colSpan={isPrintView ? 7 : 8} className="px-6 py-8 text-center text-gray-500">
                   <Package className="h-12 w-12 text-gray-300 mx-auto mb-3" />
                   <h3 className="text-lg font-medium text-gray-900">No shipments found</h3>
                   <p className="text-gray-500 mt-1">
