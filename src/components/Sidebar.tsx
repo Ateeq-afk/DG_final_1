@@ -83,6 +83,9 @@ function Sidebar({ onNavigate, currentPage }: SidebarProps) {
   const isAccountant = userData?.role === 'accountant';
   const isStaff = userData?.role === 'staff';
 
+  // If in development mode and no role is set, assume admin for preview
+  const roleForDisplay = userData?.role || (process.env.NODE_ENV === 'development' ? 'admin (dev)' : 'staff');
+
   return (
     <aside className="flex flex-col h-full bg-white">
       {/* Logo */}
@@ -256,7 +259,7 @@ function Sidebar({ onNavigate, currentPage }: SidebarProps) {
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-gray-900 truncate">{userData?.name || 'User'}</p>
-            <p className="text-xs text-gray-500 truncate capitalize">{userData?.role || 'Staff'}</p>
+            <p className="text-xs text-gray-500 truncate capitalize">{roleForDisplay}</p>
           </div>
         </div>
         <Button 

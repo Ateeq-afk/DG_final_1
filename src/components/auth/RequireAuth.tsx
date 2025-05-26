@@ -12,6 +12,7 @@ export default function RequireAuth({ children, allowedRoles }: RequireAuthProps
   const { user, userData, loading } = useAuth();
   const location = useLocation();
 
+  // Show loading screen while auth state is being determined
   if (loading) {
     return <LoadingScreen />;
   }

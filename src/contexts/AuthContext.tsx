@@ -61,6 +61,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setLoading(true);
         
         const { data: { session } } = await supabase.auth.getSession();
+        console.log('Session:', session);
+        
         setSession(session);
         setUser(session?.user ?? null);
         
@@ -72,6 +74,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
         
         setAuthInitialized(true);
+        console.log('Auth Initialized:', true);
       } catch (err) {
         console.error('Auth initialization error:', err);
         setError(err instanceof Error ? err : new Error('Failed to initialize auth'));
@@ -123,6 +126,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (data) {
         console.log('User data fetched:', data);
         setUserData(data as UserData);
+        console.log('User Role:', data.role);
         
         // If user has a branch_id, fetch branch details
         if (data.branch_id) {
@@ -262,7 +266,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   // Show loading screen while auth is initializing
-  if (!authInitialized) {
+  if (!authInitialized && process.env.NODE_ENV !== 'development') {
     return <LoadingScreen />;
   }
 
