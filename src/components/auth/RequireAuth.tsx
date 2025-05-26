@@ -12,20 +12,23 @@ export default function RequireAuth({ children, allowedRoles }: RequireAuthProps
   const { user, userData, loading } = useAuth();
   const location = useLocation();
 
+  // Debug logs
+  console.log('RequireAuth - loading:', loading, 'user:', !!user, 'userData:', userData);
+
   // Show loading screen while auth state is being determined
   if (loading) {
     return <LoadingScreen />;
   }
 
-  // If not logged in, redirect to login page
+  // For Bolt preview, allow access without authentication in development mode
+  if (!user && process.env.NODE_ENV === 'development') {
+    console.log('Development mode: bypassing authentication');
+    return <>{children}</>;
+  }
+
+  // Redirect to login if not authenticated
   if (!user) {
-    // In development or preview environments, we might want to bypass this check
-    if (process.env.NODE_ENV === 'development' || window.location.hostname.includes('stackblitz.io')) {
-      console.warn('Auth bypass in development/preview mode');
-      return <>{children}</>;
-    }
-    
-    // Redirect to the login page with the current location in state
+    // Redirect to the login page with the current location
     return <Navigate to="/signin" state={{ from: location }} replace />;
   }
 
