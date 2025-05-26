@@ -13,160 +13,31 @@ export function useCustomers(branchId: string | null = null) {
       setError(null);
       console.log('Loading customers, branchId:', branchId);
 
-      // For demo purposes, we'll use mock data
-      const mockCustomers: Customer[] = [
-        {
-          id: 'sender1',
-          branch_id: 'branch1',
-          name: 'John Doe',
-          mobile: '9876543210',
-          gst: 'GSTIN9876543210',
-          type: 'individual',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          branch_name: 'Mumbai HQ',
-          branch_code: 'MUM-HQ',
-          email: 'john.doe@example.com',
-          address: '123 Main Street, Andheri East',
-          city: 'Mumbai',
-          state: 'Maharashtra',
-          pincode: '400069',
-          credit_limit: 5000,
-          payment_terms: 'net30'
-        },
-        {
-          id: 'receiver1',
-          branch_id: 'branch2',
-          name: 'Jane Smith',
-          mobile: '9876543211',
-          type: 'individual',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          branch_name: 'Delhi Branch',
-          branch_code: 'DEL-01',
-          email: 'jane.smith@example.com',
-          address: '456 Park Avenue, Connaught Place',
-          city: 'Delhi',
-          state: 'Delhi',
-          pincode: '110001'
-        },
-        {
-          id: 'customer3',
-          branch_id: 'branch1',
-          name: 'Textile Hub',
-          mobile: '9876543212',
-          gst: 'GSTIN9876543212',
-          type: 'company',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          branch_name: 'Mumbai HQ',
-          branch_code: 'MUM-HQ',
-          email: 'contact@textilehub.com',
-          address: '789 Business Park, Worli',
-          city: 'Mumbai',
-          state: 'Maharashtra',
-          pincode: '400018',
-          credit_limit: 50000,
-          payment_terms: 'net45'
-        },
-        {
-          id: 'customer4',
-          branch_id: 'branch3',
-          name: 'Fashion World',
-          mobile: '9876543213',
-          gst: 'GSTIN9876543213',
-          type: 'company',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          branch_name: 'Bangalore Branch',
-          branch_code: 'BLR-01',
-          email: 'info@fashionworld.com',
-          address: '321 Tech Park, Whitefield',
-          city: 'Bangalore',
-          state: 'Karnataka',
-          pincode: '560066',
-          credit_limit: 25000,
-          payment_terms: 'net30'
-        },
-        {
-          id: 'customer5',
-          branch_id: 'branch2',
-          name: 'Garment Express',
-          mobile: '9876543214',
-          gst: 'GSTIN9876543214',
-          type: 'company',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          branch_name: 'Delhi Branch',
-          branch_code: 'DEL-01',
-          email: 'support@garmentexpress.com',
-          address: '567 Industrial Area, Okhla',
-          city: 'Delhi',
-          state: 'Delhi',
-          pincode: '110020',
-          credit_limit: 35000,
-          payment_terms: 'net60'
-        },
-        {
-          id: 'customer6',
-          branch_id: 'branch3',
-          name: 'Rahul Verma',
-          mobile: '9876543215',
-          type: 'individual',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          branch_name: 'Bangalore Branch',
-          branch_code: 'BLR-01',
-          email: 'rahul.verma@example.com',
-          address: '890 Residential Colony, Koramangala',
-          city: 'Bangalore',
-          state: 'Karnataka',
-          pincode: '560034'
-        },
-        {
-          id: 'customer7',
-          branch_id: 'branch1',
-          name: 'Priya Sharma',
-          mobile: '9876543216',
-          type: 'individual',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          branch_name: 'Mumbai HQ',
-          branch_code: 'MUM-HQ',
-          email: 'priya.sharma@example.com',
-          address: '234 Apartment Complex, Bandra',
-          city: 'Mumbai',
-          state: 'Maharashtra',
-          pincode: '400050'
-        },
-        {
-          id: 'customer8',
-          branch_id: 'branch2',
-          name: 'Style Solutions',
-          mobile: '9876543217',
-          gst: 'GSTIN9876543217',
-          type: 'company',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          branch_name: 'Delhi Branch',
-          branch_code: 'DEL-01',
-          email: 'hello@stylesolutions.com',
-          address: '678 Commercial Complex, Nehru Place',
-          city: 'Delhi',
-          state: 'Delhi',
-          pincode: '110019',
-          credit_limit: 40000,
-          payment_terms: 'net45'
-        }
-      ];
+      let query = supabase
+        .from('customers')
+        .select(`
+          *,
+          branch:branches(name, code)
+        `)
+        .order('name', { ascending: true });
+
+      if (branchId) {
+        query = query.eq('branch_id', branchId);
+      }
+
+      const { data, error: fetchError } = await query;
+
+      if (fetchError) throw fetchError;
       
-      // Filter by branch if specified
-      const filteredCustomers = branchId 
-        ? mockCustomers.filter(c => c.branch_id === branchId)
-        : mockCustomers;
+      // Transform the data to match our Customer type
+      const transformedData = data?.map(customer => ({
+        ...customer,
+        branch_name: customer.branch?.name,
+        branch_code: customer.branch?.code
+      })) || [];
       
-      setCustomers(filteredCustomers);
-      console.log('Customers loaded:', filteredCustomers.length);
+      setCustomers(transformedData);
+      console.log('Customers loaded:', transformedData.length);
     } catch (err) {
       console.error('Failed to load customers:', err);
       setError(err instanceof Error ? err : new Error('Failed to load customers'));
@@ -183,28 +54,27 @@ export function useCustomers(branchId: string | null = null) {
     try {
       console.log('Creating customer:', customerData);
       
-      // Find branch name and code
-      const branchName = customerData.branch_id === 'branch1' ? 'Mumbai HQ' :
-                         customerData.branch_id === 'branch2' ? 'Delhi Branch' :
-                         customerData.branch_id === 'branch3' ? 'Bangalore Branch' : '';
+      const { data, error: createError } = await supabase
+        .from('customers')
+        .insert(customerData)
+        .select(`
+          *,
+          branch:branches(name, code)
+        `)
+        .single();
+
+      if (createError) throw createError;
       
-      const branchCode = customerData.branch_id === 'branch1' ? 'MUM-HQ' :
-                         customerData.branch_id === 'branch2' ? 'DEL-01' :
-                         customerData.branch_id === 'branch3' ? 'BLR-01' : '';
-      
-      // Create a mock customer
-      const mockCustomer: Customer = {
-        id: Math.random().toString(36).substring(2, 15),
-        ...customerData,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        branch_name: branchName,
-        branch_code: branchCode
+      // Transform the data to match our Customer type
+      const transformedData = {
+        ...data,
+        branch_name: data.branch?.name,
+        branch_code: data.branch?.code
       };
       
-      setCustomers(prev => [mockCustomer, ...prev]);
-      console.log('Customer created successfully:', mockCustomer);
-      return mockCustomer;
+      setCustomers(prev => [transformedData, ...prev]);
+      console.log('Customer created successfully:', transformedData);
+      return transformedData;
     } catch (err) {
       console.error('Failed to create customer:', err);
       throw err instanceof Error ? err : new Error('Failed to create customer');
@@ -215,30 +85,23 @@ export function useCustomers(branchId: string | null = null) {
     try {
       console.log(`Updating customer ${id}:`, updates);
       
-      // Update the local state
-      const updatedCustomer = customers.find(c => c.id === id);
-      if (!updatedCustomer) throw new Error('Customer not found');
+      const { data, error: updateError } = await supabase
+        .from('customers')
+        .update(updates)
+        .eq('id', id)
+        .select(`
+          *,
+          branch:branches(name, code)
+        `)
+        .single();
+
+      if (updateError) throw updateError;
       
-      // Find branch name and code if branch_id is updated
-      let branchName = updatedCustomer.branch_name;
-      let branchCode = updatedCustomer.branch_code;
-      
-      if (updates.branch_id && updates.branch_id !== updatedCustomer.branch_id) {
-        branchName = updates.branch_id === 'branch1' ? 'Mumbai HQ' :
-                     updates.branch_id === 'branch2' ? 'Delhi Branch' :
-                     updates.branch_id === 'branch3' ? 'Bangalore Branch' : '';
-        
-        branchCode = updates.branch_id === 'branch1' ? 'MUM-HQ' :
-                     updates.branch_id === 'branch2' ? 'DEL-01' :
-                     updates.branch_id === 'branch3' ? 'BLR-01' : '';
-      }
-      
+      // Transform the data to match our Customer type
       const transformedData = {
-        ...updatedCustomer,
-        ...updates,
-        branch_name: branchName,
-        branch_code: branchCode,
-        updated_at: new Date().toISOString()
+        ...data,
+        branch_name: data.branch?.name,
+        branch_code: data.branch?.code
       };
       
       setCustomers(prev => prev.map(customer => 
@@ -257,14 +120,25 @@ export function useCustomers(branchId: string | null = null) {
     try {
       console.log(`Deleting customer ${id}`);
       
-      // Check if customer has bookings
-      const hasBookings = id === 'sender1' || id === 'receiver1';
+      // First check if customer has bookings
+      const { count, error: countError } = await supabase
+        .from('bookings')
+        .select('*', { count: 'exact', head: true })
+        .or(`sender_id.eq.${id},receiver_id.eq.${id}`);
       
-      if (hasBookings) {
+      if (countError) throw countError;
+      
+      if (count && count > 0) {
         throw new Error('Cannot delete customer with existing bookings');
       }
       
-      // Update local state
+      const { error: deleteError } = await supabase
+        .from('customers')
+        .delete()
+        .eq('id', id);
+
+      if (deleteError) throw deleteError;
+      
       setCustomers(prev => prev.filter(customer => customer.id !== id));
       console.log('Customer deleted successfully');
     } catch (err) {

@@ -29,6 +29,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { IndianRupee } from '@/components/ui/icons';
 import { motion } from 'framer-motion';
+import QuickActionCards from './dashboard/QuickActionCards';
 
 function DashboardStats() {
   const { bookings, loading: bookingsLoading } = useBookings();
@@ -285,64 +286,10 @@ function DashboardStats() {
 
   const isLoading = bookingsLoading || refreshing;
 
-  // Quick action handlers
-  const handleCreateBooking = () => {
-    navigate('/dashboard/new-booking');
-  };
-
-  const handleLoadShipment = () => {
-    navigate('/dashboard/loading');
-  };
-
-  const handleUnloadShipment = () => {
-    navigate('/dashboard/unloading');
-  };
-
-  const handleDeliverShipment = () => {
-    navigate('/dashboard/bookings');
-  };
-
   return (
     <div className="space-y-6">
       {/* Quick Actions - 4 Square Boxes */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
-        className="grid grid-cols-2 md:grid-cols-4 gap-6"
-      >
-        <QuickActionCard
-          icon={Package}
-          title="New Booking"
-          description="Create a new LR"
-          onClick={handleCreateBooking}
-          color="blue"
-        />
-        
-        <QuickActionCard
-          icon={Upload}
-          title="Load"
-          description="Create loading sheet"
-          onClick={handleLoadShipment}
-          color="green"
-        />
-        
-        <QuickActionCard
-          icon={Download}
-          title="Unload"
-          description="Process unloading"
-          onClick={handleUnloadShipment}
-          color="amber"
-        />
-        
-        <QuickActionCard
-          icon={CheckCircle2}
-          title="Deliver"
-          description="Mark as delivered"
-          onClick={handleDeliverShipment}
-          color="purple"
-        />
-      </motion.div>
+      <QuickActionCards />
 
       {/* Date Filter */}
       <motion.div 
@@ -841,70 +788,6 @@ function StatCard({ icon: Icon, title, value, color, details, trend }: StatCardP
         </div>
       )}
     </div>
-  );
-}
-
-interface QuickActionCardProps {
-  icon: React.ElementType;
-  title: string;
-  description: string;
-  onClick: () => void;
-  color: 'blue' | 'green' | 'amber' | 'purple' | 'indigo' | 'rose';
-}
-
-function QuickActionCard({ icon: Icon, title, description, onClick, color }: QuickActionCardProps) {
-  const colors = {
-    blue: {
-      bg: 'bg-blue-50',
-      text: 'text-blue-600',
-      hover: 'hover:bg-blue-100',
-      border: 'border-blue-100'
-    },
-    green: {
-      bg: 'bg-green-50',
-      text: 'text-green-600',
-      hover: 'hover:bg-green-100',
-      border: 'border-green-100'
-    },
-    amber: {
-      bg: 'bg-amber-50',
-      text: 'text-amber-600',
-      hover: 'hover:bg-amber-100',
-      border: 'border-amber-100'
-    },
-    purple: {
-      bg: 'bg-purple-50',
-      text: 'text-purple-600',
-      hover: 'hover:bg-purple-100',
-      border: 'border-purple-100'
-    },
-    indigo: {
-      bg: 'bg-indigo-50',
-      text: 'text-indigo-600',
-      hover: 'hover:bg-indigo-100',
-      border: 'border-indigo-100'
-    },
-    rose: {
-      bg: 'bg-rose-50',
-      text: 'text-rose-600',
-      hover: 'hover:bg-rose-100',
-      border: 'border-rose-100'
-    }
-  };
-
-  return (
-    <motion.div
-      whileHover={{ scale: 1.03, y: -5 }}
-      whileTap={{ scale: 0.98 }}
-      className={`bg-white rounded-xl shadow-sm border ${colors[color].border} p-6 cursor-pointer hover:shadow-md transition-all ${colors[color].hover}`}
-      onClick={onClick}
-    >
-      <div className={`p-4 rounded-xl ${colors[color].bg} mb-4 w-16 h-16 flex items-center justify-center`}>
-        <Icon className={`h-8 w-8 ${colors[color].text}`} />
-      </div>
-      <h3 className="text-xl font-bold text-gray-900">{title}</h3>
-      <p className="text-sm text-gray-500 mt-1">{description}</p>
-    </motion.div>
   );
 }
 

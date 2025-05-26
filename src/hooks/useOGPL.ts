@@ -59,8 +59,8 @@ export function useOGPL(organizationId: string | null) {
         .select(`
           *,
           vehicle:vehicles(*),
-          from_station_details:branches!from_station(*),
-          to_station_details:branches!to_station(*)
+          from_station:branches!from_station(*),
+          to_station:branches!to_station(*)
         `)
         .single();
 
@@ -94,6 +94,25 @@ export function useOGPL(organizationId: string | null) {
         .select();
 
       if (sbError) throw sbError;
+      
+      // Update OGPL status to in_transit
+      await updateOGPLStatus(ogplId, 'in_transit');
+      
+      // Update booking statuses to in_transit
+      for (const bookingId of bookingIds) {
+        const { error: bookingError } = await supabase
+          .from('bookings')
+          .update({
+            status: 'in_transit',
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', bookingId);
+        
+        if (bookingError) {
+          console.error(`Failed to update booking ${bookingId}:`, bookingError);
+        }
+      }
+      
       console.log('Added LRs to OGPL:', data);
       return data;
     } catch (err) {
@@ -140,8 +159,8 @@ export function useOGPL(organizationId: string | null) {
         .select(`
           *,
           vehicle:vehicles(*),
-          from_station_details:branches!from_station(*),
-          to_station_details:branches!to_station(*),
+          from_station:branches!from_station(*),
+          to_station:branches!to_station(*),
           loading_records(
             *,
             booking:bookings(
@@ -175,8 +194,8 @@ export function useOGPL(organizationId: string | null) {
         .select(`
           *,
           vehicle:vehicles(*),
-          from_station_details:branches!from_station(*),
-          to_station_details:branches!to_station(*),
+          from_station:branches!from_station(*),
+          to_station:branches!to_station(*),
           loading_records(
             *,
             booking:bookings(

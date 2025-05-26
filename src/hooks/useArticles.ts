@@ -1,4 +1,3 @@
-// src/hooks/useArticles.ts
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import type { Article, CustomerArticleRate } from '@/types';
@@ -117,6 +116,19 @@ export function useArticles(branchId?: string) {
   async function deleteArticle(id: string) {
     try {
       setLoading(true);
+      
+      // Check if article is used in any bookings
+      const { count, error: countError } = await supabase
+        .from('bookings')
+        .select('*', { count: 'exact', head: true })
+        .eq('article_id', id);
+      
+      if (countError) throw countError;
+      
+      if (count && count > 0) {
+        throw new Error('Cannot delete article that is used in bookings');
+      }
+      
       const { error: sbError } = await supabase
         .from('articles')
         .delete()
