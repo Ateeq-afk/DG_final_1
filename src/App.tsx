@@ -6,17 +6,8 @@ import SignInPage from './pages/SignInPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
 import UnauthorizedPage from './pages/UnauthorizedPage';
 import RequireAuth from './components/auth/RequireAuth';
-import { useAuth } from './contexts/AuthContext';
-import LoadingScreen from './components/auth/LoadingScreen';
 
 function App() {
-  const { loading } = useAuth();
-
-  // Show loading screen while auth is initializing
-  if (loading && process.env.NODE_ENV !== 'development') {
-    return <LoadingScreen />;
-  }
-
   return (
     <BrowserRouter>
       <Routes>
