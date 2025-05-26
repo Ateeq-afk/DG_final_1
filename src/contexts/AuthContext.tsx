@@ -24,7 +24,7 @@ const AuthContext = createContext<AuthContextType>({
 
 // Create a mock branch for demo purposes
 const mockUserBranch: Branch = {
-  id: 'branch1', 
+  id: '123e4567-e89b-12d3-a456-426614174000', 
   name: 'Mumbai HQ', 
   code: 'MUM-HQ',
   city: 'Mumbai',

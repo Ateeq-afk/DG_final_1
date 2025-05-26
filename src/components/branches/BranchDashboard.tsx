@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Building2, 
   Package, 
@@ -9,7 +9,7 @@ import {
   Calendar, 
   Clock, 
   CheckCircle2, 
-  AlertTriangle, 
+  AlertCircle, 
   Search,
   Filter,
   Download,
@@ -77,7 +77,7 @@ export default function BranchDashboard() {
   const currentBranch = branches.find(branch => branch.id === selectedBranch);
   
   // Calculate branch statistics
-  const branchStats = React.useMemo(() => {
+  const branchStats = useMemo(() => {
     if (!bookings.length) return {
       totalBookings: 0,
       revenue: 0,
@@ -108,7 +108,7 @@ export default function BranchDashboard() {
   }, [bookings, vehicles, selectedBranch]);
   
   // Generate booking trend data
-  const bookingTrends = React.useMemo(() => {
+  const bookingTrends = useMemo(() => {
     const dailyData = {};
     
     // Get last 30 days
@@ -141,7 +141,7 @@ export default function BranchDashboard() {
   }, [bookings, selectedBranch]);
   
   // Generate status distribution data
-  const statusDistribution = React.useMemo(() => {
+  const statusDistribution = useMemo(() => {
     const statuses = {
       'booked': 0,
       'in_transit': 0,
@@ -160,7 +160,7 @@ export default function BranchDashboard() {
   }, [bookings]);
   
   // Generate top customers data
-  const topCustomers = React.useMemo(() => {
+  const topCustomers = useMemo(() => {
     const customerBookings = {};
     
     bookings.forEach(booking => {
@@ -219,7 +219,7 @@ export default function BranchDashboard() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 p-6 flex items-center justify-center">
         <div className="text-center">
-          <AlertTriangle className="h-12 w-12 text-amber-500 mx-auto mb-4" />
+          <AlertCircle className="h-12 w-12 text-amber-500 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900">No Branch Selected</h3>
           <p className="text-gray-600 mt-1">Please select a branch to view its dashboard</p>
         </div>
