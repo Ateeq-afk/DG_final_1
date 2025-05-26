@@ -45,7 +45,7 @@ export default function Dashboard() {
   const { userData, loading } = useAuth();
 
   // Show loading screen while user data is loading
-  if (loading && process.env.NODE_ENV !== 'development') {
+  if (loading) {
     return <LoadingScreen />;
   }
 
@@ -132,7 +132,7 @@ export default function Dashboard() {
                 <Route path="/" element={<DashboardStats />} />
                 
                 {/* Routes accessible to all except accountants */}
-                {(!isAccountant || process.env.NODE_ENV === 'development') && (
+                {!isAccountant && (
                   <>
                     <Route path="/customers" element={<CustomerList />} />
                     <Route path="/bookings" element={<BookingList />} />
@@ -143,7 +143,7 @@ export default function Dashboard() {
                 )}
                 
                 {/* Routes accessible only to admin and branch manager */}
-                {((isAdmin || isBranchManager) || process.env.NODE_ENV === 'development') && (
+                {(isAdmin || isBranchManager) && (
                   <>
                     <Route path="/vehicles" element={<VehicleList />} />
                     <Route path="/loading" element={
@@ -164,7 +164,7 @@ export default function Dashboard() {
                 )}
                 
                 {/* Routes accessible only to admin */}
-                {(isAdmin || process.env.NODE_ENV === 'development') && (
+                {isAdmin && (
                   <>
                     <Route path="/branches" element={<BranchManagementPage />} />
                     <Route path="/users" element={<UserManagementPage />} />
@@ -172,7 +172,7 @@ export default function Dashboard() {
                 )}
                 
                 {/* Routes accessible to admin and accountant */}
-                {((isAdmin || isAccountant) || process.env.NODE_ENV === 'development') && (
+                {(isAdmin || isAccountant) && (
                   <Route path="/revenue" element={<RevenuePage />} />
                 )}
                 
