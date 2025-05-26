@@ -60,6 +60,7 @@ export function useBookings<T = Booking>(branchId: string | null = null) {
     } catch (err) {
       console.error('Failed to load bookings:', err);
       setError(err instanceof Error ? err : new Error('Failed to load bookings'));
+      setBookings([] as unknown as T[]); // Return empty array on error
     } finally {
       setLoading(false);
     }
