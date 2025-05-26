@@ -186,7 +186,129 @@ export function useBookings<T = Booking>(branchId: string | null = null) {
     loadBookings();
   }, [loadBookings]);
 
-  // [no change to createBooking / updateBookingStatus / deleteBooking]
+  const createBooking = async (data: Omit<Booking, 'id' | 'created_at' | 'updated_at' | 'total_amount'>) => {
+    try {
+      console.log('Creating booking with data:', data);
+      
+      // Validate branch IDs
+      if (data.branch_id && !isValidUUID(data.branch_id)) {
+        throw new Error('Invalid branch ID format');
+      }
+      if (data.from_branch && !isValidUUID(data.from_branch)) {
+        throw new Error('Invalid from_branch ID format');
+      }
+      if (data.to_branch && !isValidUUID(data.to_branch)) {
+        throw new Error('Invalid to_branch ID format');
+      }
+      
+      // Calculate total amount
+      const totalAmount = (data.quantity * data.freight_per_qty) + 
+                          (data.loading_charges || 0) + 
+                          (data.unloading_charges || 0) +
+                          (data.insurance_charge || 0) +
+                          (data.packaging_charge || 0);
+      
+      // Insert booking into Supabase
+      const { data: newBooking, error: insertError } = await supabase
+        .from('bookings')
+        .insert({
+          ...data,
+          branch_id: data.branch_id || userBranch?.id,
+          total_amount: totalAmount,
+          status: 'booked'
+        })
+        .select(`
+          *,
+          sender:customers!sender_id(*),
+          receiver:customers!receiver_id(*),
+          article:articles(*),
+          from_branch_details:branches!from_branch(*),
+          to_branch_details:branches!to_branch(*)
+        `)
+        .single();
+      
+      if (insertError) throw insertError;
+      
+      // Add to local state
+      setBookings(prev => [newBooking, ...prev] as unknown as T[]);
+      
+      console.log('Booking created successfully:', newBooking);
+      return newBooking as unknown as T;
+    } catch (err) {
+      console.error('Failed to create booking:', err);
+      throw err instanceof Error ? err : new Error('Failed to create booking');
+    }
+  };
+
+  const updateBookingStatus = async (id: string, status: Booking['status'], additionalUpdates: Partial<Booking> = {}) => {
+    try {
+      if (!isValidUUID(id)) {
+        throw new Error('Invalid booking ID format');
+      }
+
+      console.log(`Updating booking ${id} status to ${status}`);
+      
+      // Update booking in Supabase
+      const { data: updatedBooking, error: updateError } = await supabase
+        .from('bookings')
+        .update({
+          ...additionalUpdates,
+          status,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', id)
+        .select(`
+          *,
+          sender:customers!sender_id(*),
+          receiver:customers!receiver_id(*),
+          article:articles(*),
+          from_branch_details:branches!from_branch(*),
+          to_branch_details:branches!to_branch(*)
+        `)
+        .single();
+      
+      if (updateError) throw updateError;
+      
+      // Update the local state
+      setBookings(prev => 
+        prev.map(booking => 
+          (booking as any).id === id ? updatedBooking : booking
+        ) as T[]
+      );
+      
+      console.log('Booking status updated successfully:', updatedBooking);
+      return updatedBooking;
+    } catch (err) {
+      console.error('Failed to update booking status:', err);
+      throw err instanceof Error ? err : new Error('Failed to update booking status');
+    }
+  };
+
+  const deleteBooking = async (id: string) => {
+    try {
+      if (!isValidUUID(id)) {
+        throw new Error('Invalid booking ID format');
+      }
+
+      console.log(`Deleting booking ${id}`);
+      
+      // Delete booking from Supabase
+      const { error: deleteError } = await supabase
+        .from('bookings')
+        .delete()
+        .eq('id', id);
+      
+      if (deleteError) throw deleteError;
+      
+      // Update the local state
+      setBookings(prev => prev.filter(booking => (booking as any).id !== id) as T[]);
+      
+      console.log('Booking deleted successfully');
+    } catch (err) {
+      console.error('Failed to delete booking:', err);
+      throw err instanceof Error ? err : new Error('Failed to delete booking');
+    }
+  };
 
   return {
     bookings,
