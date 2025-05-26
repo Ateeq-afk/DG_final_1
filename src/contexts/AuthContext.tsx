@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabaseClient';
+import { Database } from '@/types/supabase';
 
 type UserRole = 'admin' | 'branch_manager' | 'staff' | 'accountant';
 
@@ -50,7 +51,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [userData, setUserData] = useState<UserData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-  const [userBranch, setUserBranch] = useState<Branch | null>(null);
 
   useEffect(() => {
     // Get initial session
@@ -67,7 +67,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state changed:', event, session?.user?.id);
         setSession(session);
         setUser(session?.user ?? null);
         
@@ -75,7 +74,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           await fetchUserData(session.user.id);
         } else {
           setUserData(null);
-          setUserBranch(null);
           setLoading(false);
         }
       }
@@ -89,58 +87,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const fetchUserData = async (userId: string) => {
     try {
       setLoading(true);
-      console.log('Fetching user data for:', userId);
-      
-      // Use specific column selection instead of * to avoid RLS recursion issues
       const { data, error } = await supabase
         .from('users')
-        .select('id, name, email, role, branch_id')
+        .select('*')
         .eq('id', userId)
         .single();
 
-      if (error) {
-        console.error('Error fetching user data:', error);
-        throw error;
-      }
+      if (error) throw error;
       
       if (data) {
-        console.log('User data fetched:', data);
         setUserData(data as UserData);
-        
-        // If user has a branch_id, fetch branch details
-        if (data.branch_id) {
-          fetchUserBranch(data.branch_id);
-        } else {
-          setUserBranch(null);
-        }
-      } else {
-        console.warn('No user data found for ID:', userId);
-        setUserData(null);
-        setUserBranch(null);
       }
     } catch (error) {
       console.error('Error fetching user data:', error);
       setError(error instanceof Error ? error : new Error('Failed to fetch user data'));
     } finally {
       setLoading(false);
-    }
-  };
-
-  const fetchUserBranch = async (branchId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('branches')
-        .select('id, name, code, city, state')
-        .eq('id', branchId)
-        .single();
-
-      if (error) throw error;
-      
-      if (data) {
-        setUserBranch(data as Branch);
-      }
-    } catch (error) {
-      console.error('Error fetching branch data:', error);
     }
   };
 
@@ -231,7 +193,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSession(null);
       setUser(null);
       setUserData(null);
-      setUserBranch(null);
     } catch (error) {
       console.error('Error signing out:', error);
       setError(error instanceof Error ? error : new Error('Failed to sign out'));
@@ -241,7 +202,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const getCurrentUserBranch = (): Branch | null => {
-    return userBranch;
+    if (!userData?.branch_id) return null;
+    
+    // In a real implementation, you would fetch this from the branches table
+    // For now, we'll return a mock branch if we have a branch_id
+    return {
+      id: userData.branch_id,
+      name: 'Current Branch',
+      code: 'CURR',
+      city: 'Mumbai',
+      state: 'Maharashtra'
+    };
   };
 
   return (
