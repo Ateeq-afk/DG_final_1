@@ -3,11 +3,12 @@ import { supabase } from '@/lib/supabaseClient';
 
 interface User {
   id: string;
+  name: string;
   email: string;
-  role: 'super_admin' | 'admin' | 'user';
-  organizations: string[];
-  lastLogin: string;
-  status: 'active' | 'inactive' | 'suspended';
+  role: 'admin' | 'branch_manager' | 'staff' | 'accountant';
+  branch_id: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 interface PaginationParams {
@@ -19,7 +20,7 @@ interface UserFilters {
   search?: string;
   role?: string;
   status?: string;
-  organizationId?: string;
+  branchId?: string;
 }
 
 export function useUsers() {
@@ -38,20 +39,17 @@ export function useUsers() {
 
       let query = supabase
         .from('users')
-        .select('*', { count: 'exact' });
+        .select('id, name, email, role, branch_id, created_at, updated_at', { count: 'exact' });
 
       // Apply filters
       if (filters?.search) {
-        query = query.ilike('email', `%${filters.search}%`);
+        query = query.or(`name.ilike.%${filters.search}%,email.ilike.%${filters.search}%`);
       }
       if (filters?.role) {
         query = query.eq('role', filters.role);
       }
-      if (filters?.status) {
-        query = query.eq('status', filters.status);
-      }
-      if (filters?.organizationId) {
-        query = query.eq('organization_id', filters.organizationId);
+      if (filters?.branchId) {
+        query = query.eq('branch_id', filters.branchId);
       }
 
       // Apply pagination
@@ -75,7 +73,7 @@ export function useUsers() {
     }
   }, []);
 
-  const inviteUser = async (email: string, role: string, organizationIds: string[]) => {
+  const inviteUser = async (email: string, role: string, branchId?: string) => {
     try {
       setLoading(true);
       setError(null);
@@ -83,7 +81,7 @@ export function useUsers() {
       // First check if user already exists
       const { data: existingUser } = await supabase
         .from('users')
-        .select('id')
+        .select('id, name, email, role')
         .eq('email', email)
         .single();
 
@@ -100,26 +98,14 @@ export function useUsers() {
         .from('users')
         .insert({
           email,
+          name: email.split('@')[0], // Temporary name from email
           role,
-          status: 'inactive'
+          branch_id: branchId || null
         })
-        .select()
+        .select('id, name, email, role, branch_id')
         .single();
 
       if (createError) throw createError;
-
-      // Add organization memberships
-      const memberships = organizationIds.map(orgId => ({
-        user_id: user.id,
-        organization_id: orgId,
-        role: role
-      }));
-
-      const { error: membershipError } = await supabase
-        .from('organization_members')
-        .insert(memberships);
-
-      if (membershipError) throw membershipError;
 
       return user;
     } catch (err) {
@@ -140,7 +126,7 @@ export function useUsers() {
         .from('users')
         .update({ role: newRole })
         .eq('id', userId)
-        .select()
+        .select('id, name, email, role, branch_id')
         .single();
 
       if (error) throw error;
@@ -154,23 +140,23 @@ export function useUsers() {
     }
   };
 
-  const updateUserStatus = async (userId: string, newStatus: string) => {
+  const updateUserBranch = async (userId: string, branchId: string | null) => {
     try {
       setLoading(true);
       setError(null);
 
       const { data, error } = await supabase
         .from('users')
-        .update({ status: newStatus })
+        .update({ branch_id: branchId })
         .eq('id', userId)
-        .select()
+        .select('id, name, email, role, branch_id')
         .single();
 
       if (error) throw error;
       return data;
     } catch (err) {
-      console.error('Failed to update user status:', err);
-      setError(err instanceof Error ? err : new Error('Failed to update user status'));
+      console.error('Failed to update user branch:', err);
+      setError(err instanceof Error ? err : new Error('Failed to update user branch'));
       throw err;
     } finally {
       setLoading(false);
@@ -185,7 +171,7 @@ export function useUsers() {
     fetchUsers,
     inviteUser,
     updateUserRole,
-    updateUserStatus
+    updateUserBranch
   };
 }
 
