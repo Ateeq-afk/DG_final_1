@@ -35,19 +35,13 @@ import LazyBook from './bookings/LazyBook';
 import UserManagementPage from '@/pages/UserManagementPage';
 import { useAuth } from '@/contexts/AuthContext';
 import RequireAuth from './auth/RequireAuth';
-import LoadingScreen from './auth/LoadingScreen';
 
 export default function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  const { userData, loading } = useAuth();
-
-  // Show loading screen while user data is loading
-  if (loading) {
-    return <LoadingScreen />;
-  }
+  const { userData } = useAuth();
 
   // Check user role for permissions
   const isAdmin = userData?.role === 'admin';
