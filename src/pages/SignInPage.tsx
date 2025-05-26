@@ -1,47 +1,48 @@
-import React, { useState } from 'react';
-import { Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { Truck, Loader2 } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import LoadingScreen from '@/components/auth/LoadingScreen';
-import SignInForm from '@/components/auth/SignInForm';
-import SignUpForm from '@/components/auth/SignUpForm';
-import ForgotPasswordForm from '@/components/auth/ForgotPasswordForm';
-import EmailVerification from '@/components/auth/EmailVerification';
+// src/pages/SignInPage.tsx
+import React, { useState } from 'react'
+import { Navigate, useLocation, useNavigate } from 'react-router-dom'
+import { Truck, Loader2 } from 'lucide-react'
+import { useAuth } from '@/contexts/AuthContext'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import LoadingScreen from '@/components/auth/LoadingScreen'
+import SignInForm from '@/components/auth/SignInForm'
+import SignUpForm from '@/components/auth/SignUpForm'
+import ForgotPasswordForm from '@/components/auth/ForgotPasswordForm'
+import EmailVerification from '@/components/auth/EmailVerification'
 
-type View = 'signIn' | 'signUp' | 'forgotPassword' | 'verifyEmail';
+type View = 'signIn' | 'signUp' | 'forgotPassword' | 'verifyEmail'
 
 export default function SignInPage() {
-  const { user, loading } = useAuth();
-  const location = useLocation();
-  const navigate = useNavigate();
-  const [view, setView] = useState<View>('signIn');
-  const [email, setEmail] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  const { user, loading } = useAuth()
+  const location = useLocation<{ from?: { pathname: string } }>()
+  const navigate = useNavigate()
+  const [view, setView] = useState<View>('signIn')
+  const [email, setEmail] = useState('')
+  const [error, setError] = useState<string | null>(null)
 
   // Determine post-login redirect target
-  const redirectTo = location.state?.from?.pathname ?? '/dashboard';
+  const redirectTo = location.state?.from?.pathname ?? '/dashboard'
 
   // Show loading spinner while auth state initializes
-  if (loading) return <LoadingScreen />;
+  if (loading) return <LoadingScreen />
   // If already signed in, redirect
-  if (user) return <Navigate to={redirectTo} replace />;
+  if (user) return <Navigate to={redirectTo} replace />
 
   // On successful authentication, navigate away
   function handleSuccess() {
-    navigate(redirectTo, { replace: true });
+    navigate(redirectTo, { replace: true })
   }
 
   // Show errors from child forms
   function handleError(message: string) {
-    setError(message);
+    setError(message)
   }
 
   // After sign-up, move to email verification view
   function handleVerifyEmailRequested(newEmail: string) {
-    setEmail(newEmail);
-    setView('verifyEmail');
+    setEmail(newEmail)
+    setView('verifyEmail')
   }
 
   return (
@@ -127,5 +128,5 @@ export default function SignInPage() {
         </div>
       </div>
     </div>
-  );
+  )
 }
