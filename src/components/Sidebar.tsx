@@ -21,7 +21,6 @@ import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/contexts/AuthContext';
 
 interface NavItemProps {
   icon: React.ElementType;
@@ -47,7 +46,6 @@ interface SidebarProps {
 
 function Sidebar({ onNavigate, currentPage }: SidebarProps) {
   const navigate = useNavigate();
-  const { userData, signOut } = useAuth();
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({
     overview: false,
     operations: false,
@@ -69,22 +67,14 @@ function Sidebar({ onNavigate, currentPage }: SidebarProps) {
   };
 
   const handleSignOut = async () => {
-    try {
-      await signOut();
-      navigate('/signin');
-    } catch (error) {
-      console.error('Failed to sign out:', error);
-    }
+    navigate('/signin');
   };
 
-  // Check user role for permissions
-  const isAdmin = userData?.role === 'admin';
-  const isBranchManager = userData?.role === 'branch_manager';
-  const isAccountant = userData?.role === 'accountant';
-  const isStaff = userData?.role === 'staff';
-
-  // If in development mode and no role is set, assume admin for preview
-  const roleForDisplay = userData?.role || (process.env.NODE_ENV === 'development' ? 'admin (dev)' : 'staff');
+  // Mock user role for development
+  const isAdmin = true;
+  const isBranchManager = false;
+  const isAccountant = false;
+  const isStaff = false;
 
   return (
     <aside className="flex flex-col h-full bg-white">
@@ -134,121 +124,107 @@ function Sidebar({ onNavigate, currentPage }: SidebarProps) {
         </NavGroup>
         
         {/* Operations */}
-        {!isAccountant && (
-          <NavGroup 
-            title="OPERATIONS" 
-            defaultOpen={true}
-            onToggle={() => toggleCollapse('operations')}
-            isCollapsed={collapsed.operations}
-          >
-            <NavItem 
-              icon={Package} 
-              text="Bookings" 
-              active={currentPage === 'bookings'}
-              onClick={() => handleNavigate('bookings')}
-              badge={3}
-            />
-            {(isAdmin || isBranchManager) && (
-              <>
-                <NavItem 
-                  icon={Upload} 
-                  text="Loading" 
-                  active={currentPage === 'loading'}
-                  onClick={() => handleNavigate('loading')}
-                />
-                <NavItem 
-                  icon={Download} 
-                  text="Unloading" 
-                  active={currentPage === 'unloading'}
-                  onClick={() => handleNavigate('unloading')}
-                />
-              </>
-            )}
-            <NavItem 
-              icon={Layers2} 
-              text="Articles" 
-              active={currentPage === 'articles'}
-              onClick={() => handleNavigate('articles')}
-            />
-          </NavGroup>
-        )}
+        <NavGroup 
+          title="OPERATIONS" 
+          defaultOpen={true}
+          onToggle={() => toggleCollapse('operations')}
+          isCollapsed={collapsed.operations}
+        >
+          <NavItem 
+            icon={Package} 
+            text="Bookings" 
+            active={currentPage === 'bookings'}
+            onClick={() => handleNavigate('bookings')}
+            badge={3}
+          />
+          <NavItem 
+            icon={Upload} 
+            text="Loading" 
+            active={currentPage === 'loading'}
+            onClick={() => handleNavigate('loading')}
+          />
+          <NavItem 
+            icon={Download} 
+            text="Unloading" 
+            active={currentPage === 'unloading'}
+            onClick={() => handleNavigate('unloading')}
+          />
+          <NavItem 
+            icon={Layers2} 
+            text="Articles" 
+            active={currentPage === 'articles'}
+            onClick={() => handleNavigate('articles')}
+          />
+        </NavGroup>
 
-        {/* Management - Admin and Branch Manager only */}
-        {(isAdmin || isBranchManager) && (
-          <NavGroup 
-            title="MANAGEMENT" 
-            defaultOpen={true}
-            onToggle={() => toggleCollapse('management')}
-            isCollapsed={collapsed.management}
-          >
-            <NavItem 
-              icon={Users} 
-              text="Customers"
-              active={currentPage === 'customers'}
-              onClick={() => handleNavigate('customers')}
-            />
-            <NavItem 
-              icon={Truck} 
-              text="Vehicles"
-              active={currentPage === 'vehicles'}
-              onClick={() => handleNavigate('vehicles')}
-            />
-            {isAdmin && (
-              <NavItem 
-                icon={Building2} 
-                text="Branches"
-                active={currentPage === 'branches'}
-                onClick={() => handleNavigate('branches')}
-              />
-            )}
-          </NavGroup>
-        )}
+        {/* Management */}
+        <NavGroup 
+          title="MANAGEMENT" 
+          defaultOpen={true}
+          onToggle={() => toggleCollapse('management')}
+          isCollapsed={collapsed.management}
+        >
+          <NavItem 
+            icon={Users} 
+            text="Customers"
+            active={currentPage === 'customers'}
+            onClick={() => handleNavigate('customers')}
+          />
+          <NavItem 
+            icon={Truck} 
+            text="Vehicles"
+            active={currentPage === 'vehicles'}
+            onClick={() => handleNavigate('vehicles')}
+          />
+          <NavItem 
+            icon={Building2} 
+            text="Branches"
+            active={currentPage === 'branches'}
+            onClick={() => handleNavigate('branches')}
+          />
+        </NavGroup>
 
-        {/* Finance - Admin and Accountant only */}
-        {(isAdmin || isAccountant) && (
-          <NavGroup 
-            title="FINANCE" 
-            defaultOpen={true}
-            onToggle={() => toggleCollapse('finance')}
-            isCollapsed={collapsed.finance}
-          >
-            <NavItem 
-              icon={IndianRupee} 
-              text="Revenue"
-              active={currentPage === 'revenue'}
-              onClick={() => handleNavigate('revenue')}
-            />
-            <NavItem 
-              icon={BarChart3} 
-              text="Reports"
-              active={currentPage === 'reports'}
-              onClick={() => handleNavigate('reports')}
-            />
-          </NavGroup>
-        )}
+        {/* Finance */}
+        <NavGroup 
+          title="FINANCE" 
+          defaultOpen={true}
+          onToggle={() => toggleCollapse('finance')}
+          isCollapsed={collapsed.finance}
+        >
+          <NavItem 
+            icon={IndianRupee} 
+            text="Revenue"
+            active={currentPage === 'revenue'}
+            onClick={() => handleNavigate('revenue')}
+          />
+          <NavItem 
+            icon={BarChart3} 
+            text="Reports"
+            active={currentPage === 'reports'}
+            onClick={() => handleNavigate('reports')}
+          />
+        </NavGroup>
         
-        {/* Settings - Admin only */}
-        {isAdmin && (
-          <NavGroup 
-            title="SETTINGS" 
-            defaultOpen={false}
-            onToggle={() => toggleCollapse('settings')}
-            isCollapsed={collapsed.settings}
-          >
-            <NavItem 
-              icon={Settings} 
-              text="Preferences"
-              active={currentPage === 'settings'}
-              onClick={() => handleNavigate('settings')}
-            />
-            <NavItem 
-              icon={Users} 
-              text="User Management"
-              active={currentPage === 'users'}
-              onClick={() => handleNavigate('users')}
-            />
-          </NavGroup>
-        )}
+        {/* Settings */}
+        <NavGroup 
+          title="SETTINGS" 
+          defaultOpen={false}
+          onToggle={() => toggleCollapse('settings')}
+          isCollapsed={collapsed.settings}
+        >
+          <NavItem 
+            icon={Settings} 
+            text="Preferences"
+            active={currentPage === 'settings'}
+            onClick={() => handleNavigate('settings')}
+          />
+          <NavItem 
+            icon={Users} 
+            text="User Management"
+            active={currentPage === 'users'}
+            onClick={() => handleNavigate('users')}
+          />
+        </NavGroup>
       </nav>
 
       {/* User Section */}
@@ -258,8 +234,8 @@ function Sidebar({ onNavigate, currentPage }: SidebarProps) {
             <Users className="h-4 w-4 text-brand-700" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-gray-900 truncate">{userData?.name || 'User'}</p>
-            <p className="text-xs text-gray-500 truncate capitalize">{roleForDisplay}</p>
+            <p className="text-sm font-medium text-gray-900 truncate">Demo User</p>
+            <p className="text-xs text-gray-500 truncate capitalize">Admin</p>
           </div>
         </div>
         <Button 

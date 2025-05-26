@@ -1,48 +1,14 @@
-import React, { useState } from 'react';
-import { Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { Truck, Loader2 } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Truck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import LoadingScreen from '@/components/auth/LoadingScreen';
-import SignInForm from '@/components/auth/SignInForm';
-import SignUpForm from '@/components/auth/SignUpForm';
-import ForgotPasswordForm from '@/components/auth/ForgotPasswordForm';
-import EmailVerification from '@/components/auth/EmailVerification';
-
-type View = 'signIn' | 'signUp' | 'forgotPassword' | 'verifyEmail';
 
 export default function SignInPage() {
-  const { user, loading } = useAuth();
-  const location = useLocation();
   const navigate = useNavigate();
-  const [view, setView] = useState<View>('signIn');
-  const [email, setEmail] = useState('');
-  const [error, setError] = useState<string | null>(null);
 
-  // Determine post-login redirect target
-  const redirectTo = location.state?.from?.pathname ?? '/dashboard';
-
-  // Show loading spinner while auth state initializes
-  if (loading) return <LoadingScreen />;
-  // If already signed in, redirect
-  if (user) return <Navigate to={redirectTo} replace />;
-
-  // On successful authentication, navigate away
-  function handleSuccess() {
-    navigate(redirectTo, { replace: true });
-  }
-
-  // Show errors from child forms
-  function handleError(message: string) {
-    setError(message);
-  }
-
-  // After sign-up, move to email verification view
-  function handleVerifyEmailRequested(newEmail: string) {
-    setEmail(newEmail);
-    setView('verifyEmail');
-  }
+  const handleSignIn = () => {
+    navigate('/dashboard');
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
@@ -86,42 +52,26 @@ export default function SignInPage() {
         {/* Authentication forms panel */}
         <div className="flex flex-1 items-center justify-center p-8">
           <div className="w-full max-w-md">
-            {error && (
-              <div className="mb-6 bg-red-50 border border-red-200 text-red-600 p-4 rounded-xl">
-                {error}
-              </div>
-            )}
             <div className="bg-white rounded-2xl shadow-xl p-8">
-              {view === 'signIn' && (
-                <SignInForm
-                  onSuccess={handleSuccess}
-                  onError={handleError}
-                  onForgotPassword={() => setView('forgotPassword')}
-                  onToggleMode={() => setView('signUp')}
-                />
-              )}
+              <div className="text-center">
+                <h2 className="text-2xl font-bold">Welcome to DesiCargo</h2>
+                <p className="text-sm text-gray-500 mt-1">
+                  Demo Mode - No authentication required
+                </p>
+              </div>
 
-              {view === 'signUp' && (
-                <SignUpForm
-                  onSuccess={handleVerifyEmailRequested}
-                  onError={handleError}
-                  onToggleMode={() => setView('signIn')}
-                />
-              )}
+              <div className="mt-8">
+                <Button 
+                  className="w-full bg-blue-600 hover:bg-blue-700"
+                  onClick={handleSignIn}
+                >
+                  Enter Dashboard
+                </Button>
+              </div>
 
-              {view === 'forgotPassword' && (
-                <ForgotPasswordForm
-                  onSuccess={() => setView('signIn')}
-                  onBack={() => setView('signIn')}
-                />
-              )}
-
-              {view === 'verifyEmail' && (
-                <EmailVerification
-                  email={email}
-                  onClose={() => setView('signIn')}
-                />
-              )}
+              <div className="mt-6 text-center text-sm text-gray-500">
+                <p>This is a demo application. Click the button above to enter.</p>
+              </div>
             </div>
           </div>
         </div>

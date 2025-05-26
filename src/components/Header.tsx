@@ -8,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { motion } from 'framer-motion';
 import { useNotifications } from '@/lib/notifications';
-import UserMenu from './UserMenu';
 
 export default function Header() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -61,7 +60,9 @@ export default function Header() {
             </Button>
           </motion.div>
 
-          <UserMenu />
+          <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
+            <span className="text-sm font-medium text-blue-600">DU</span>
+          </div>
         </div>
       </div>
     </header>
