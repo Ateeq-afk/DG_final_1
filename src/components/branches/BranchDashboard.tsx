@@ -109,7 +109,7 @@ export default function BranchDashboard() {
   
   // Generate booking trend data
   const bookingTrends = useMemo(() => {
-    const dailyData = {};
+    const dailyData: Record<string, {date: string, inbound: number, outbound: number}> = {};
     
     // Get last 30 days
     const today = new Date();
@@ -142,7 +142,7 @@ export default function BranchDashboard() {
   
   // Generate status distribution data
   const statusDistribution = useMemo(() => {
-    const statuses = {
+    const statuses: Record<string, number> = {
       'booked': 0,
       'in_transit': 0,
       'delivered': 0,
@@ -161,7 +161,7 @@ export default function BranchDashboard() {
   
   // Generate top customers data
   const topCustomers = useMemo(() => {
-    const customerBookings = {};
+    const customerBookings: Record<string, number> = {};
     
     bookings.forEach(booking => {
       // Count both senders and receivers
@@ -397,7 +397,6 @@ export default function BranchDashboard() {
           value={branchStats.totalBookings.toString()}
           icon={Package}
           color="blue"
-          trend={{ value: "+12%", isUp: true }}
         />
         
         <StatCard
@@ -405,7 +404,6 @@ export default function BranchDashboard() {
           value={`₹${(branchStats.revenue / 1000).toFixed(1)}K`}
           icon={IndianRupee}
           color="green"
-          trend={{ value: "+8.5%", isUp: true }}
         />
         
         <StatCard
@@ -413,7 +411,6 @@ export default function BranchDashboard() {
           value={branchStats.inboundBookings.toString()}
           icon={ArrowDownRight}
           color="purple"
-          trend={{ value: "+15%", isUp: true }}
         />
         
         <StatCard
@@ -421,7 +418,6 @@ export default function BranchDashboard() {
           value={branchStats.outboundBookings.toString()}
           icon={ArrowUpRight}
           color="amber"
-          trend={{ value: "+10%", isUp: true }}
         />
         
         <StatCard
@@ -429,7 +425,6 @@ export default function BranchDashboard() {
           value={branchStats.pendingDeliveries.toString()}
           icon={Clock}
           color="red"
-          trend={{ value: "-5%", isUp: false }}
         />
         
         <StatCard
@@ -437,7 +432,6 @@ export default function BranchDashboard() {
           value={`${branchStats.activeVehicles}/${vehicles.length}`}
           icon={Truck}
           color="indigo"
-          trend={{ value: "+2", isUp: true }}
         />
       </motion.div>
       
@@ -474,50 +468,56 @@ export default function BranchDashboard() {
               </Select>
             </div>
             <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={bookingTrends}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis 
-                    dataKey="date" 
-                    tick={{ fontSize: 12 }}
-                    tickFormatter={(value) => {
-                      const date = new Date(value);
-                      return date.toLocaleDateString('en-US', { 
-                        month: 'short', 
-                        day: 'numeric' 
-                      });
-                    }}
-                  />
-                  <YAxis tick={{ fontSize: 12 }} />
-                  <Tooltip 
-                    formatter={(value) => [value, '']}
-                    labelFormatter={(label) => {
-                      const date = new Date(label);
-                      return date.toLocaleDateString('en-US', { 
-                        weekday: 'long',
-                        year: 'numeric', 
-                        month: 'long', 
-                        day: 'numeric' 
-                      });
-                    }}
-                  />
-                  <Legend />
-                  <Bar 
-                    name="Outbound" 
-                    dataKey="outbound" 
-                    fill="#3b82f6" 
-                    radius={[4, 4, 0, 0]} 
-                    barSize={8}
-                  />
-                  <Bar 
-                    name="Inbound" 
-                    dataKey="inbound" 
-                    fill="#8b5cf6" 
-                    radius={[4, 4, 0, 0]} 
-                    barSize={8}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
+              {bookingTrends.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={bookingTrends}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis 
+                      dataKey="date" 
+                      tick={{ fontSize: 12 }}
+                      tickFormatter={(value) => {
+                        const date = new Date(value);
+                        return date.toLocaleDateString('en-US', { 
+                          month: 'short', 
+                          day: 'numeric' 
+                        });
+                      }}
+                    />
+                    <YAxis tick={{ fontSize: 12 }} />
+                    <Tooltip 
+                      formatter={(value) => [value, '']}
+                      labelFormatter={(label) => {
+                        const date = new Date(label);
+                        return date.toLocaleDateString('en-US', { 
+                          weekday: 'long',
+                          year: 'numeric', 
+                          month: 'long', 
+                          day: 'numeric' 
+                        });
+                      }}
+                    />
+                    <Legend />
+                    <Bar 
+                      name="Outbound" 
+                      dataKey="outbound" 
+                      fill="#3b82f6" 
+                      radius={[4, 4, 0, 0]} 
+                      barSize={8}
+                    />
+                    <Bar 
+                      name="Inbound" 
+                      dataKey="inbound" 
+                      fill="#8b5cf6" 
+                      radius={[4, 4, 0, 0]} 
+                      barSize={8}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="h-full flex items-center justify-center">
+                  <p className="text-gray-500">No booking data available</p>
+                </div>
+              )}
             </div>
           </motion.div>
           
@@ -537,7 +537,7 @@ export default function BranchDashboard() {
                 </div>
               </div>
               <div className="h-[250px]">
-                {statusDistribution.length > 0 ? (
+                {statusDistribution.length > 0 && statusDistribution.some(item => item.value > 0) ? (
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
@@ -719,30 +719,30 @@ export default function BranchDashboard() {
                 <div>
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-sm text-gray-600">On-Time Delivery</span>
-                    <span className="text-sm font-medium">85%</span>
+                    <span className="text-sm font-medium">0%</span>
                   </div>
                   <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div className="h-full bg-green-500 rounded-full" style={{ width: '85%' }}></div>
+                    <div className="h-full bg-green-500 rounded-full" style={{ width: '0%' }}></div>
                   </div>
                 </div>
                 
                 <div>
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-sm text-gray-600">Delivery Success Rate</span>
-                    <span className="text-sm font-medium">92%</span>
+                    <span className="text-sm font-medium">0%</span>
                   </div>
                   <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div className="h-full bg-blue-500 rounded-full" style={{ width: '92%' }}></div>
+                    <div className="h-full bg-blue-500 rounded-full" style={{ width: '0%' }}></div>
                   </div>
                 </div>
                 
                 <div>
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-sm text-gray-600">Average Delivery Time</span>
-                    <span className="text-sm font-medium">36 hours</span>
+                    <span className="text-sm font-medium">0 hours</span>
                   </div>
                   <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div className="h-full bg-purple-500 rounded-full" style={{ width: '75%' }}></div>
+                    <div className="h-full bg-purple-500 rounded-full" style={{ width: '0%' }}></div>
                   </div>
                 </div>
               </div>
@@ -754,30 +754,30 @@ export default function BranchDashboard() {
                 <div>
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-sm text-gray-600">Vehicle Utilization</span>
-                    <span className="text-sm font-medium">78%</span>
+                    <span className="text-sm font-medium">0%</span>
                   </div>
                   <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div className="h-full bg-amber-500 rounded-full" style={{ width: '78%' }}></div>
+                    <div className="h-full bg-amber-500 rounded-full" style={{ width: '0%' }}></div>
                   </div>
                 </div>
                 
                 <div>
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-sm text-gray-600">Staff Productivity</span>
-                    <span className="text-sm font-medium">88%</span>
+                    <span className="text-sm font-medium">0%</span>
                   </div>
                   <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div className="h-full bg-green-500 rounded-full" style={{ width: '88%' }}></div>
+                    <div className="h-full bg-green-500 rounded-full" style={{ width: '0%' }}></div>
                   </div>
                 </div>
                 
                 <div>
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-sm text-gray-600">Cost Efficiency</span>
-                    <span className="text-sm font-medium">82%</span>
+                    <span className="text-sm font-medium">0%</span>
                   </div>
                   <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div className="h-full bg-blue-500 rounded-full" style={{ width: '82%' }}></div>
+                    <div className="h-full bg-blue-500 rounded-full" style={{ width: '0%' }}></div>
                   </div>
                 </div>
               </div>
@@ -789,30 +789,30 @@ export default function BranchDashboard() {
                 <div>
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-sm text-gray-600">Overall Rating</span>
-                    <span className="text-sm font-medium">4.8/5.0</span>
+                    <span className="text-sm font-medium">0/5.0</span>
                   </div>
                   <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div className="h-full bg-green-500 rounded-full" style={{ width: '96%' }}></div>
+                    <div className="h-full bg-green-500 rounded-full" style={{ width: '0%' }}></div>
                   </div>
                 </div>
                 
                 <div>
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-sm text-gray-600">Issue Resolution</span>
-                    <span className="text-sm font-medium">95%</span>
+                    <span className="text-sm font-medium">0%</span>
                   </div>
                   <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div className="h-full bg-blue-500 rounded-full" style={{ width: '95%' }}></div>
+                    <div className="h-full bg-blue-500 rounded-full" style={{ width: '0%' }}></div>
                   </div>
                 </div>
                 
                 <div>
                   <div className="flex items-center justify-between mb-1">
                     <span className="text-sm text-gray-600">Repeat Customers</span>
-                    <span className="text-sm font-medium">82%</span>
+                    <span className="text-sm font-medium">0%</span>
                   </div>
                   <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div className="h-full bg-purple-500 rounded-full" style={{ width: '82%' }}></div>
+                    <div className="h-full bg-purple-500 rounded-full" style={{ width: '0%' }}></div>
                   </div>
                 </div>
               </div>
@@ -842,37 +842,8 @@ export default function BranchDashboard() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={[
-                    { name: 'Mumbai HQ', value: 120 },
-                    { name: 'Delhi Branch', value: 98 },
-                    { name: 'Bangalore Branch', value: 86 },
-                    { name: currentBranch.name, value: 105 },
-                    { name: 'Chennai Branch', value: 90 }
-                  ]}
-                  layout="vertical"
-                  margin={{ top: 5, right: 30, left: 80, bottom: 5 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
-                  <XAxis type="number" />
-                  <YAxis 
-                    type="category" 
-                    dataKey="name" 
-                    tick={{ fontSize: 12 }}
-                    width={80}
-                  />
-                  <Tooltip formatter={(value) => [value, 'Bookings']} />
-                  <Bar 
-                    dataKey="value" 
-                    fill={(entry) => entry.name === currentBranch.name ? '#3b82f6' : '#94a3b8'}
-                    name="Bookings"
-                    radius={[0, 4, 4, 0]}
-                    barSize={20}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
+            <div className="h-[300px] flex items-center justify-center">
+              <p className="text-gray-500">No comparison data available</p>
             </div>
           </motion.div>
         </TabsContent>
@@ -897,56 +868,8 @@ export default function BranchDashboard() {
                   Add Staff
                 </Button>
               </div>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
-                      <User className="h-5 w-5 text-blue-600" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-gray-900">Rajesh Kumar</p>
-                      <p className="text-sm text-gray-500">Branch Manager</p>
-                    </div>
-                  </div>
-                  <div className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
-                    Active
-                  </div>
-                </div>
-                
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
-                      <User className="h-5 w-5 text-blue-600" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-gray-900">Priya Sharma</p>
-                      <p className="text-sm text-gray-500">Operations Manager</p>
-                    </div>
-                  </div>
-                  <div className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
-                    Active
-                  </div>
-                </div>
-                
-                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
-                      <User className="h-5 w-5 text-blue-600" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-gray-900">Amit Patel</p>
-                      <p className="text-sm text-gray-500">Booking Operator</p>
-                    </div>
-                  </div>
-                  <div className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
-                    Active
-                  </div>
-                </div>
-              </div>
-              <div className="mt-4 text-center">
-                <Button variant="outline" size="sm" className="w-full">
-                  View All Staff
-                </Button>
+              <div className="flex items-center justify-center py-8">
+                <p className="text-gray-500">No staff data available</p>
               </div>
             </motion.div>
             
@@ -1029,72 +952,8 @@ export default function BranchDashboard() {
                 Add Item
               </Button>
             </div>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="bg-gray-50">
-                    <th className="text-left text-sm font-medium text-gray-600 px-4 py-3">Item</th>
-                    <th className="text-left text-sm font-medium text-gray-600 px-4 py-3">Category</th>
-                    <th className="text-left text-sm font-medium text-gray-600 px-4 py-3">Quantity</th>
-                    <th className="text-left text-sm font-medium text-gray-600 px-4 py-3">Status</th>
-                    <th className="text-right text-sm font-medium text-gray-600 px-4 py-3">Last Updated</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  <tr className="hover:bg-gray-50">
-                    <td className="px-4 py-3 font-medium">Packaging Materials</td>
-                    <td className="px-4 py-3 text-sm text-gray-600">Supplies</td>
-                    <td className="px-4 py-3 text-sm text-gray-600">250 units</td>
-                    <td className="px-4 py-3">
-                      <span className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
-                        In Stock
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-600 text-right">
-                      {new Date().toLocaleDateString()}
-                    </td>
-                  </tr>
-                  <tr className="hover:bg-gray-50">
-                    <td className="px-4 py-3 font-medium">Hand Trucks</td>
-                    <td className="px-4 py-3 text-sm text-gray-600">Equipment</td>
-                    <td className="px-4 py-3 text-sm text-gray-600">8 units</td>
-                    <td className="px-4 py-3">
-                      <span className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
-                        In Stock
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-600 text-right">
-                      {new Date().toLocaleDateString()}
-                    </td>
-                  </tr>
-                  <tr className="hover:bg-gray-50">
-                    <td className="px-4 py-3 font-medium">Weighing Scales</td>
-                    <td className="px-4 py-3 text-sm text-gray-600">Equipment</td>
-                    <td className="px-4 py-3 text-sm text-gray-600">5 units</td>
-                    <td className="px-4 py-3">
-                      <span className="bg-yellow-100 text-yellow-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
-                        Low Stock
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-600 text-right">
-                      {new Date().toLocaleDateString()}
-                    </td>
-                  </tr>
-                  <tr className="hover:bg-gray-50">
-                    <td className="px-4 py-3 font-medium">Pallet Jacks</td>
-                    <td className="px-4 py-3 text-sm text-gray-600">Equipment</td>
-                    <td className="px-4 py-3 text-sm text-gray-600">3 units</td>
-                    <td className="px-4 py-3">
-                      <span className="bg-green-100 text-green-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
-                        In Stock
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-600 text-right">
-                      {new Date().toLocaleDateString()}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+            <div className="flex items-center justify-center py-8">
+              <p className="text-gray-500">No inventory data available</p>
             </div>
           </motion.div>
         </TabsContent>

@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { supabase } from '@/lib/supabaseClient';
+import { supabase } from './supabaseClient';
 import type { OGPL } from '@/types';
 
 export function useOGPL(organizationId: string | null) {
@@ -8,11 +8,10 @@ export function useOGPL(organizationId: string | null) {
 
   const generateOGPLNumber = async () => {
     try {
-      // Get the latest OGPL number for the organization
+      // Get the latest OGPL number
       const { data: latest, error: queryError } = await supabase
         .from('ogpl')
         .select('ogpl_number')
-        .eq('organization_id', organizationId)
         .order('created_at', { ascending: false })
         .limit(1);
 
@@ -53,7 +52,6 @@ export function useOGPL(organizationId: string | null) {
         .from('ogpl')
         .insert({
           ...data,
-          organization_id: organizationId,
           status: 'created'
         })
         .select(`
@@ -171,7 +169,6 @@ export function useOGPL(organizationId: string | null) {
             )
           )
         `)
-        .eq('organization_id', organizationId)
         .order('created_at', { ascending: false });
 
       if (sbError) throw sbError;

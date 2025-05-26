@@ -10,7 +10,7 @@ const isValidUUID = (uuid: string | null): boolean => {
   return UUID_REGEX.test(uuid);
 };
 
-export function useBranches(organizationId?: string) {
+export function useBranches() {
   const [branches, setBranches] = useState<Branch[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -34,7 +34,7 @@ export function useBranches(organizationId?: string) {
     } finally {
       setLoading(false);
     }
-  }, [organizationId]);
+  }, []);
 
   useEffect(() => {
     loadBranches();

@@ -30,7 +30,6 @@ export function useUnloading(organizationId: string | null) {
             )
           )
         `)
-        .eq('organization_id', organizationId)
         .eq('status', 'in_transit')
         .order('created_at', { ascending: false });
 

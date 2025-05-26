@@ -28,7 +28,7 @@ export function useCustomers(branchId: string | null = null) {
       }
 
       console.log('Loading customers, branchId:', branchId);
-
+      
       let query = supabase
         .from('customers')
         .select(`
@@ -36,13 +36,13 @@ export function useCustomers(branchId: string | null = null) {
           branch:branches(name, code)
         `)
         .order('name', { ascending: true });
-
+      
       if (branchId) {
         query = query.eq('branch_id', branchId);
       }
-
+      
       const { data, error: fetchError } = await query;
-
+      
       if (fetchError) throw fetchError;
       
       // Transform the data to match our Customer type
@@ -82,7 +82,7 @@ export function useCustomers(branchId: string | null = null) {
           branch:branches(name, code)
         `)
         .single();
-
+      
       if (createError) throw createError;
       
       // Transform the data to match our Customer type
@@ -122,7 +122,7 @@ export function useCustomers(branchId: string | null = null) {
           branch:branches(name, code)
         `)
         .single();
-
+      
       if (updateError) throw updateError;
       
       // Transform the data to match our Customer type
@@ -168,7 +168,7 @@ export function useCustomers(branchId: string | null = null) {
         .from('customers')
         .delete()
         .eq('id', id);
-
+      
       if (deleteError) throw deleteError;
       
       setCustomers(prev => prev.filter(customer => customer.id !== id));

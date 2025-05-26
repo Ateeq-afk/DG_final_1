@@ -5,7 +5,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useBookings } from '@/hooks/useBookings';
-import { useOrganizations } from '@/hooks/useOrganizations';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useNotificationSystem } from '@/hooks/useNotificationSystem';
 import { useCurrentBranch } from '@/hooks/useCurrentBranch';
@@ -33,9 +32,7 @@ import QuickActionCards from './dashboard/QuickActionCards';
 
 function DashboardStats() {
   const { bookings, loading: bookingsLoading } = useBookings();
-  const { organizations } = useOrganizations();
   const { currentBranch } = useCurrentBranch();
-  const organizationId = organizations[0]?.id;
   const { showSuccess } = useNotificationSystem();
   const navigate = useNavigate();
 
@@ -120,16 +117,17 @@ function DashboardStats() {
     const totalDeliveries = filteredBookings.length;
     const revenue = filteredBookings.reduce((sum, b) => sum + (b.total_amount || 0), 0);
 
-    // Calculate average delivery time (mock data for now)
-    const avgDeliveryTime = 36; // hours
-
-    // Calculate active vehicles (mock data)
-    const activeVehicles = 18;
-    const totalVehicles = 25;
-
-    // Calculate customers (mock data)
-    const totalCustomers = 56;
-    const newCustomers = 8;
+    // Calculate average delivery time (based on actual data)
+    const deliveredBookings = filteredBookings.filter(b => b.status === 'delivered');
+    let avgDeliveryTime = 0;
+    if (deliveredBookings.length > 0) {
+      const totalDeliveryTime = deliveredBookings.reduce((sum, b) => {
+        const bookingDate = new Date(b.created_at).getTime();
+        const deliveryDate = new Date(b.updated_at).getTime();
+        return sum + (deliveryDate - bookingDate) / (1000 * 60 * 60); // hours
+      }, 0);
+      avgDeliveryTime = totalDeliveryTime / deliveredBookings.length;
+    }
 
     return {
       totalDeliveries,
@@ -139,16 +137,16 @@ function DashboardStats() {
       bookedCount,
       cancelledCount,
       avgDeliveryTime,
-      activeVehicles,
-      totalVehicles,
-      totalCustomers,
-      newCustomers
+      activeVehicles: 0, // Will be populated from vehicles data
+      totalVehicles: 0,  // Will be populated from vehicles data
+      totalCustomers: 0, // Will be populated from customers data
+      newCustomers: 0    // Will be populated from customers data
     };
   }, [filteredBookings]);
 
   // Generate booking trend data
   const bookingTrends = React.useMemo(() => {
-    const dailyData = {};
+    const dailyData: Record<string, {date: string, bookings: number, delivered: number, revenue: number}> = {};
     
     // Get last 30 days
     const today = new Date();
@@ -181,7 +179,7 @@ function DashboardStats() {
 
   // Generate status distribution data
   const statusDistribution = React.useMemo(() => {
-    const statuses = {
+    const statuses: Record<string, number> = {
       'booked': 0,
       'in_transit': 0,
       'delivered': 0,
@@ -200,7 +198,7 @@ function DashboardStats() {
 
   // Generate payment type distribution data
   const paymentTypeData = React.useMemo(() => {
-    const paymentTypes = {
+    const paymentTypes: Record<string, number> = {
       'Paid': 0,
       'To Pay': 0,
       'Quotation': 0
@@ -221,7 +219,7 @@ function DashboardStats() {
 
   // Generate branch-wise sales data
   const branchSalesData = React.useMemo(() => {
-    const branchSales = {};
+    const branchSales: Record<string, number> = {};
     filteredBookings.forEach(booking => {
       const branchName = booking.from_branch_details?.name || 'Unknown';
       if (!branchSales[branchName]) {
@@ -240,7 +238,7 @@ function DashboardStats() {
 
   // Generate monthly revenue trend
   const monthlyRevenueTrend = React.useMemo(() => {
-    const monthlyData = {};
+    const monthlyData: Record<string, {month: string, revenue: number}> = {};
     
     // Get last 12 months
     const today = new Date();
@@ -408,7 +406,6 @@ function DashboardStats() {
                     { label: 'Cancelled', value: stats.cancelledCount }
                   ]}
                   color="blue"
-                  trend={{ value: "+12%", isUp: true }}
                 />
               </motion.div>
               
@@ -422,7 +419,6 @@ function DashboardStats() {
                   title="Total Revenue"
                   value={`₹${(stats.revenue / 1000).toFixed(1)}K`}
                   color="purple"
-                  trend={{ value: "+8.5%", isUp: true }}
                   details={[
                     { label: 'Paid', value: filteredBookings.filter(b => b.payment_type === 'Paid').length },
                     { label: 'To Pay', value: filteredBookings.filter(b => b.payment_type === 'To Pay').length },
@@ -442,11 +438,10 @@ function DashboardStats() {
                   title="Fleet Status"
                   value={`${stats.activeVehicles}/${stats.totalVehicles}`}
                   color="green"
-                  trend={{ value: "+5.2%", isUp: true }}
                   details={[
                     { label: 'Active', value: stats.activeVehicles },
-                    { label: 'Maintenance', value: 4 },
-                    { label: 'Inactive', value: 3 },
+                    { label: 'Maintenance', value: 0 },
+                    { label: 'Inactive', value: 0 },
                     { label: 'Utilization', value: stats.totalVehicles ? Math.round((stats.activeVehicles / stats.totalVehicles) * 100) : 0, suffix: '%' }
                   ]}
                 />
@@ -462,12 +457,11 @@ function DashboardStats() {
                   title="Customers"
                   value={stats.totalCustomers.toString()}
                   color="amber"
-                  trend={{ value: `+${stats.newCustomers}`, isUp: true }}
                   details={[
                     { label: 'New', value: stats.newCustomers },
-                    { label: 'Companies', value: 24 },
-                    { label: 'Individuals', value: 32 },
-                    { label: 'Active', value: 48 }
+                    { label: 'Companies', value: 0 },
+                    { label: 'Individuals', value: 0 },
+                    { label: 'Active', value: 0 }
                   ]}
                 />
               </motion.div>
@@ -503,72 +497,78 @@ function DashboardStats() {
                   </div>
                 </div>
                 <div className="h-[300px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={bookingTrends}>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                      <XAxis 
-                        dataKey="date" 
-                        tick={{ fontSize: 12 }}
-                        tickFormatter={(value) => {
-                          const date = new Date(value);
-                          return date.toLocaleDateString('en-US', { 
-                            month: 'short', 
-                            day: 'numeric' 
-                          });
-                        }}
-                      />
-                      <YAxis 
-                        yAxisId="left"
-                        tick={{ fontSize: 12 }}
-                      />
-                      <YAxis 
-                        yAxisId="right"
-                        orientation="right"
-                        tick={{ fontSize: 12 }}
-                        tickFormatter={(value) => `₹${value/1000}K`}
-                      />
-                      <Tooltip 
-                        formatter={(value, name) => {
-                          if (name === 'revenue') return [`₹${value}`, 'Revenue'];
-                          return [value, name.charAt(0).toUpperCase() + name.slice(1)];
-                        }}
-                        labelFormatter={(label) => {
-                          const date = new Date(label);
-                          return date.toLocaleDateString('en-US', { 
-                            weekday: 'long',
-                            year: 'numeric', 
-                            month: 'long', 
-                            day: 'numeric' 
-                          });
-                        }}
-                      />
-                      <Bar 
-                        yAxisId="left"
-                        name="bookings" 
-                        dataKey="bookings" 
-                        fill="#3b82f6" 
-                        radius={[4, 4, 0, 0]} 
-                        barSize={8}
-                      />
-                      <Bar 
-                        yAxisId="left"
-                        name="delivered" 
-                        dataKey="delivered" 
-                        fill="#22c55e" 
-                        radius={[4, 4, 0, 0]} 
-                        barSize={8}
-                      />
-                      <Line
-                        yAxisId="right"
-                        name="revenue"
-                        type="monotone"
-                        dataKey="revenue"
-                        stroke="#8b5cf6"
-                        strokeWidth={2}
-                        dot={{ r: 4 }}
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
+                  {bookingTrends.length > 0 ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={bookingTrends}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                        <XAxis 
+                          dataKey="date" 
+                          tick={{ fontSize: 12 }}
+                          tickFormatter={(value) => {
+                            const date = new Date(value);
+                            return date.toLocaleDateString('en-US', { 
+                              month: 'short', 
+                              day: 'numeric' 
+                            });
+                          }}
+                        />
+                        <YAxis 
+                          yAxisId="left"
+                          tick={{ fontSize: 12 }}
+                        />
+                        <YAxis 
+                          yAxisId="right"
+                          orientation="right"
+                          tick={{ fontSize: 12 }}
+                          tickFormatter={(value) => `₹${value/1000}K`}
+                        />
+                        <Tooltip 
+                          formatter={(value, name) => {
+                            if (name === 'revenue') return [`₹${value}`, 'Revenue'];
+                            return [value, name.charAt(0).toUpperCase() + name.slice(1)];
+                          }}
+                          labelFormatter={(label) => {
+                            const date = new Date(label);
+                            return date.toLocaleDateString('en-US', { 
+                              weekday: 'long',
+                              year: 'numeric', 
+                              month: 'long', 
+                              day: 'numeric' 
+                            });
+                          }}
+                        />
+                        <Bar 
+                          yAxisId="left"
+                          name="bookings" 
+                          dataKey="bookings" 
+                          fill="#3b82f6" 
+                          radius={[4, 4, 0, 0]} 
+                          barSize={8}
+                        />
+                        <Bar 
+                          yAxisId="left"
+                          name="delivered" 
+                          dataKey="delivered" 
+                          fill="#22c55e" 
+                          radius={[4, 4, 0, 0]} 
+                          barSize={8}
+                        />
+                        <Line
+                          yAxisId="right"
+                          name="revenue"
+                          type="monotone"
+                          dataKey="revenue"
+                          stroke="#8b5cf6"
+                          strokeWidth={2}
+                          dot={{ r: 4 }}
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="h-full flex items-center justify-center">
+                      <p className="text-gray-500">No booking data available for the selected period</p>
+                    </div>
+                  )}
                 </div>
               </motion.div>
               
@@ -587,27 +587,33 @@ function DashboardStats() {
                   <Filter className="h-5 w-5 text-gray-400" />
                 </div>
                 <div className="h-[300px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={statusDistribution}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={60}
-                        outerRadius={90}
-                        paddingAngle={5}
-                        dataKey="value"
-                        label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
-                      >
-                        <Cell fill="#22c55e" /> {/* Delivered - Green */}
-                        <Cell fill="#3b82f6" /> {/* In Transit - Blue */}
-                        <Cell fill="#f59e0b" /> {/* Booked - Yellow */}
-                        <Cell fill="#ef4444" /> {/* Cancelled - Red */}
-                      </Pie>
-                      <Tooltip formatter={(value) => [`${value} bookings`, 'Count']} />
-                      <Legend />
-                    </PieChart>
-                  </ResponsiveContainer>
+                  {statusDistribution.some(item => item.value > 0) ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={statusDistribution}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={60}
+                          outerRadius={90}
+                          paddingAngle={5}
+                          dataKey="value"
+                          label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                        >
+                          <Cell fill="#22c55e" /> {/* Delivered - Green */}
+                          <Cell fill="#3b82f6" /> {/* In Transit - Blue */}
+                          <Cell fill="#f59e0b" /> {/* Booked - Yellow */}
+                          <Cell fill="#ef4444" /> {/* Cancelled - Red */}
+                        </Pie>
+                        <Tooltip formatter={(value) => [`${value} bookings`, 'Count']} />
+                        <Legend />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="h-full flex items-center justify-center">
+                      <p className="text-gray-500">No status data available for the selected period</p>
+                    </div>
+                  )}
                 </div>
               </motion.div>
             </div>
@@ -709,7 +715,7 @@ function DashboardStats() {
 
 interface TrendProps {
   value: string;
-  isUp: boolean;
+  isUp?: boolean;
 }
 
 interface StatCardProps {
