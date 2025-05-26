@@ -1,72 +1,59 @@
 import { supabase } from './supabaseClient';
 import { User } from '@supabase/supabase-js';
 
-export async function signUp(email: string, password: string) {
-  console.log('Mock sign up with:', email);
-  return {
-    user: null,
-    session: {
-      access_token: 'mock-token',
-      refresh_token: 'mock-refresh-token',
-      expires_in: 3600, 
-      expires_at: new Date().getTime() + 3600 * 1000,
-      token_type: 'bearer',
-      user: null
-    }
-  };
+export async function signUp(email: string, password: string, userData: any) {
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      data: userData,
+    },
+  });
+
+  if (error) throw error;
+  return data;
 }
 
-export async function signIn(email: string, password: string, rememberMe: boolean = false) {
-  console.log('Mock sign in with:', email);
-  localStorage.setItem('rememberMe', rememberMe.toString());
-  return {
-    user: null,
-    session: {
-      access_token: 'mock-token', 
-      refresh_token: 'mock-refresh-token',
-      expires_in: 3600,
-      expires_at: new Date().getTime() + 3600 * 1000,
-      token_type: 'bearer',
-      user: null
-    }
-  };
+export async function signIn(email: string, password: string) {
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+
+  if (error) throw error;
+  return data;
 }
 
-export async function signOut(redirect: boolean = true) {
-  console.log('Mock sign out'); 
-  return { error: null };
+export async function signOut() {
+  const { error } = await supabase.auth.signOut();
+  if (error) throw error;
 }
 
 export async function resetPassword(email: string) {
-  console.log('Mock reset password for:', email);
-  return { error: null };
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${window.location.origin}/reset-password`,
+  });
+
+  if (error) throw error;
 }
 
 export async function updatePassword(newPassword: string) {
-  console.log('Mock update password');
-  return { error: null };
-}
+  const { error } = await supabase.auth.updateUser({
+    password: newPassword,
+  });
 
-export async function verifyEmail(token: string) {
-  console.log('Mock verify email with token:', token);
-  return { error: null };
-}
-
-export async function resendVerificationEmail(email: string) {
-  console.log('Mock resend verification email to:', email);
-  return { error: null };
+  if (error) throw error;
 }
 
 export async function getCurrentUser(): Promise<User | null> {
-  return null;
+  const { data } = await supabase.auth.getUser();
+  return data.user;
 }
 
 export function onAuthStateChange(callback: (user: User | null) => void) {
-  // Immediately call the callback with null user
-  callback(null);
+  const { data } = supabase.auth.onAuthStateChange((_, session) => {
+    callback(session?.user || null);
+  });
   
-  // Return a dummy subscription
-  return {
-    unsubscribe: () => {}
-  };
+  return data.subscription;
 }

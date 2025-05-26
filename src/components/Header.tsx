@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { motion } from 'framer-motion';
 import { useNotifications } from '@/lib/notifications';
+import UserMenu from './UserMenu';
 
 export default function Header() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -59,6 +60,8 @@ export default function Header() {
               <HelpCircle className="h-5 w-5 text-gray-700" />
             </Button>
           </motion.div>
+
+          <UserMenu />
         </div>
       </div>
     </header>
