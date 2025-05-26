@@ -16,8 +16,15 @@ export default function RequireAuth({ children, allowedRoles }: RequireAuthProps
     return <LoadingScreen />;
   }
 
+  // If not logged in, redirect to login page
   if (!user) {
-    // Redirect to the login page if not logged in
+    // In development or preview environments, we might want to bypass this check
+    if (process.env.NODE_ENV === 'development' || window.location.hostname.includes('stackblitz.io')) {
+      console.warn('Auth bypass in development/preview mode');
+      return <>{children}</>;
+    }
+    
+    // Redirect to the login page with the current location in state
     return <Navigate to="/signin" state={{ from: location }} replace />;
   }
 

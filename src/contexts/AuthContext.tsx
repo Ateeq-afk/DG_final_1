@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabaseClient';
+import LoadingScreen from '@/components/auth/LoadingScreen';
 
 type UserRole = 'admin' | 'branch_manager' | 'staff' | 'accountant';
 
@@ -51,18 +52,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [userBranch, setUserBranch] = useState<Branch | null>(null);
+  const [authInitialized, setAuthInitialized] = useState(false);
 
   useEffect(() => {
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchUserData(session.user.id);
-      } else {
+    const initializeAuth = async () => {
+      try {
+        setLoading(true);
+        
+        const { data: { session } } = await supabase.auth.getSession();
+        setSession(session);
+        setUser(session?.user ?? null);
+        
+        if (session?.user) {
+          await fetchUserData(session.user.id);
+        } else {
+          setUserData(null);
+          setUserBranch(null);
+        }
+        
+        setAuthInitialized(true);
+      } catch (err) {
+        console.error('Auth initialization error:', err);
+        setError(err instanceof Error ? err : new Error('Failed to initialize auth'));
+      } finally {
         setLoading(false);
       }
-    });
+    };
+
+    initializeAuth();
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -76,7 +94,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } else {
           setUserData(null);
           setUserBranch(null);
-          setLoading(false);
         }
       }
     );
@@ -109,7 +126,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         
         // If user has a branch_id, fetch branch details
         if (data.branch_id) {
-          fetchUserBranch(data.branch_id);
+          await fetchUserBranch(data.branch_id);
         } else {
           setUserBranch(null);
         }
@@ -243,6 +260,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const getCurrentUserBranch = (): Branch | null => {
     return userBranch;
   };
+
+  // Show loading screen while auth is initializing
+  if (!authInitialized) {
+    return <LoadingScreen />;
+  }
 
   return (
     <AuthContext.Provider

@@ -36,6 +36,8 @@ interface NavGroupProps {
   title: string;
   children: React.ReactNode;
   defaultOpen?: boolean;
+  onToggle: () => void;
+  isCollapsed: boolean;
 }
 
 interface SidebarProps {
@@ -129,42 +131,44 @@ function Sidebar({ onNavigate, currentPage }: SidebarProps) {
         </NavGroup>
         
         {/* Operations */}
-        <NavGroup 
-          title="OPERATIONS" 
-          defaultOpen={true}
-          onToggle={() => toggleCollapse('operations')}
-          isCollapsed={collapsed.operations}
-        >
-          <NavItem 
-            icon={Package} 
-            text="Bookings" 
-            active={currentPage === 'bookings'}
-            onClick={() => handleNavigate('bookings')}
-            badge={3}
-          />
-          {(isAdmin || isBranchManager) && (
-            <>
-              <NavItem 
-                icon={Upload} 
-                text="Loading" 
-                active={currentPage === 'loading'}
-                onClick={() => handleNavigate('loading')}
-              />
-              <NavItem 
-                icon={Download} 
-                text="Unloading" 
-                active={currentPage === 'unloading'}
-                onClick={() => handleNavigate('unloading')}
-              />
-            </>
-          )}
-          <NavItem 
-            icon={Layers2} 
-            text="Articles" 
-            active={currentPage === 'articles'}
-            onClick={() => handleNavigate('articles')}
-          />
-        </NavGroup>
+        {!isAccountant && (
+          <NavGroup 
+            title="OPERATIONS" 
+            defaultOpen={true}
+            onToggle={() => toggleCollapse('operations')}
+            isCollapsed={collapsed.operations}
+          >
+            <NavItem 
+              icon={Package} 
+              text="Bookings" 
+              active={currentPage === 'bookings'}
+              onClick={() => handleNavigate('bookings')}
+              badge={3}
+            />
+            {(isAdmin || isBranchManager) && (
+              <>
+                <NavItem 
+                  icon={Upload} 
+                  text="Loading" 
+                  active={currentPage === 'loading'}
+                  onClick={() => handleNavigate('loading')}
+                />
+                <NavItem 
+                  icon={Download} 
+                  text="Unloading" 
+                  active={currentPage === 'unloading'}
+                  onClick={() => handleNavigate('unloading')}
+                />
+              </>
+            )}
+            <NavItem 
+              icon={Layers2} 
+              text="Articles" 
+              active={currentPage === 'articles'}
+              onClick={() => handleNavigate('articles')}
+            />
+          </NavGroup>
+        )}
 
         {/* Management - Admin and Branch Manager only */}
         {(isAdmin || isBranchManager) && (
@@ -268,7 +272,7 @@ function Sidebar({ onNavigate, currentPage }: SidebarProps) {
   );
 }
 
-function NavGroup({ title, children, defaultOpen = true, onToggle, isCollapsed }: NavGroupProps & { onToggle: () => void, isCollapsed: boolean }) {
+function NavGroup({ title, children, defaultOpen = true, onToggle, isCollapsed }: NavGroupProps) {
   return (
     <div className="space-y-1">
       <div 
