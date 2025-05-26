@@ -1,6 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 
+// UUID validation regex
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+const isValidUUID = (uuid: string | null): boolean => {
+  if (!uuid) return false;
+  return UUID_REGEX.test(uuid);
+};
+
 export interface Vehicle {
   id: string;
   branch_id: string;
@@ -25,6 +33,12 @@ export function useVehicles(branchId: string | null = null) {
     try {
       setLoading(true);
       setError(null);
+
+      // Validate branch ID
+      if (branchId && !isValidUUID(branchId)) {
+        throw new Error('Invalid branch ID format');
+      }
+
       console.log('Loading vehicles, branchId:', branchId);
       
       let query = supabase
@@ -55,6 +69,10 @@ export function useVehicles(branchId: string | null = null) {
 
   async function createVehicle(vehicleData: Omit<Vehicle, 'id' | 'created_at' | 'updated_at'>) {
     try {
+      if (vehicleData.branch_id && !isValidUUID(vehicleData.branch_id)) {
+        throw new Error('Invalid branch ID format');
+      }
+
       console.log('Creating vehicle:', vehicleData);
       
       const { data, error: createError } = await supabase
@@ -76,6 +94,14 @@ export function useVehicles(branchId: string | null = null) {
 
   async function updateVehicle(id: string, updates: Partial<Vehicle>) {
     try {
+      if (!isValidUUID(id)) {
+        throw new Error('Invalid vehicle ID format');
+      }
+
+      if (updates.branch_id && !isValidUUID(updates.branch_id)) {
+        throw new Error('Invalid branch ID format');
+      }
+
       console.log(`Updating vehicle ${id}:`, updates);
       
       const { data, error: updateError } = await supabase
@@ -101,6 +127,10 @@ export function useVehicles(branchId: string | null = null) {
 
   async function deleteVehicle(id: string) {
     try {
+      if (!isValidUUID(id)) {
+        throw new Error('Invalid vehicle ID format');
+      }
+
       console.log(`Deleting vehicle ${id}`);
       
       // Check if vehicle is used in any OGPL

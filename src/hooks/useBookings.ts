@@ -3,6 +3,14 @@ import { supabase } from '@/lib/supabaseClient';
 import type { Booking } from '@/types';
 import { useAuth } from '@/contexts/AuthContext';
 
+// UUID validation regex
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+const isValidUUID = (uuid: string | null): boolean => {
+  if (!uuid) return false;
+  return UUID_REGEX.test(uuid);
+};
+
 export function useBookings<T = Booking>(branchId: string | null = null) {
   const [bookings, setBookings] = useState<T[]>([]);
   const [loading, setLoading] = useState(true);
@@ -14,7 +22,16 @@ export function useBookings<T = Booking>(branchId: string | null = null) {
     try {
       setLoading(true);
       setError(null);
-      console.log('Loading bookings, branchId:', branchId || userBranch?.id);
+
+      // Validate branch IDs
+      const validBranchId = branchId && isValidUUID(branchId);
+      const validUserBranchId = userBranch?.id && isValidUUID(userBranch.id);
+
+      if ((branchId && !validBranchId) || (!branchId && userBranch?.id && !validUserBranchId)) {
+        throw new Error('Invalid branch ID format');
+      }
+
+      console.log('Loading bookings, branchId:', validBranchId ? branchId : userBranch?.id);
 
       let query = supabase
         .from('bookings')
@@ -28,10 +45,10 @@ export function useBookings<T = Booking>(branchId: string | null = null) {
         `)
         .order('created_at', { ascending: false });
 
-      // Filter by branch if specified
-      if (branchId) {
+      // Only apply branch filter if we have a valid UUID
+      if (validBranchId) {
         query = query.or(`from_branch.eq.${branchId},to_branch.eq.${branchId}`);
-      } else if (userBranch?.id) {
+      } else if (validUserBranchId) {
         query = query.or(`from_branch.eq.${userBranch.id},to_branch.eq.${userBranch.id}`);
       }
 
@@ -92,6 +109,10 @@ export function useBookings<T = Booking>(branchId: string | null = null) {
 
   const updateBookingStatus = async (id: string, status: Booking['status'], additionalUpdates: Partial<Booking> = {}) => {
     try {
+      if (!isValidUUID(id)) {
+        throw new Error('Invalid booking ID format');
+      }
+
       console.log(`Updating booking ${id} status to ${status}`);
       
       const { data: updatedBooking, error: updateError } = await supabase
@@ -130,6 +151,10 @@ export function useBookings<T = Booking>(branchId: string | null = null) {
 
   const deleteBooking = async (id: string) => {
     try {
+      if (!isValidUUID(id)) {
+        throw new Error('Invalid booking ID format');
+      }
+
       console.log(`Deleting booking ${id}`);
       
       const { error: deleteError } = await supabase
