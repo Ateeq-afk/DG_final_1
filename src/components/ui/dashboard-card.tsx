@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 
 export interface DashboardCardProps extends React.HTMLAttributes<HTMLDivElement> {
   children: ReactNode;
-  variant?: "default" | "glass" | "gradient" | "outline" | "soft";
+  variant?: "default" | "glass" | "gradient" | "elevated" | "bordered" | "soft";
   color?: "blue" | "green" | "amber" | "purple" | "indigo" | "rose" | "gray";
   withHover?: boolean;
   withAnimation?: boolean;
@@ -65,14 +65,15 @@ export const DashboardCard = React.forwardRef<HTMLDivElement, DashboardCardProps
       default: "bg-white border border-gray-200",
       glass: "bg-white/80 backdrop-blur-lg border border-white/20",
       gradient: getGradientStyle(color),
-      outline: getBorderedStyle(color),
+      elevated: "bg-white border border-gray-100",
+      bordered: getBorderedStyle(color),
       soft: getSoftStyle(color)
     };
 
     // Shadow styles based on variant
-    const shadowStyles = variant === "soft" 
-      ? "shadow-[0_8px_30px_-5px_rgba(0,0,0,0.1),_0_6px_10px_-5px_rgba(0,0,0,0.04)]"
-      : "shadow-[0_10px_30px_-5px_rgba(0,0,0,0.1),_0_4px_6px_-2px_rgba(0,0,0,0.05)]";
+    const shadowStyles = variant === "elevated" 
+      ? "shadow-[0_10px_30px_-5px_rgba(0,0,0,0.1),_0_10px_10px_-5px_rgba(0,0,0,0.04)]"
+      : "shadow-[0_4px_20px_-5px_rgba(0,0,0,0.1),_0_2px_8px_-3px_rgba(0,0,0,0.05)]";
 
     return (
       <motion.div

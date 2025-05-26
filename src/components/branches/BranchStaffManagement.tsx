@@ -48,7 +48,7 @@ export default function BranchStaffManagement({ branchId }: BranchStaffManagemen
   const [staffToDelete, setStaffToDelete] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   
-  const { users, loading: usersLoading } = useBranchUsers(branchId);
+  const { users, loading: usersLoading, addUser, updateUser, removeUser } = useBranchUsers(branchId);
   const { showSuccess, showError } = useNotificationSystem();
   
   // Filter users based on search
@@ -62,19 +62,19 @@ export default function BranchStaffManagement({ branchId }: BranchStaffManagemen
     );
   }, [users, searchQuery]);
   
-  // Handle branch change
-  const handleBranchChange = (branchId: string) => {
-    setSelectedBranch(branchId);
-  };
-  
   // Handle add staff
   const handleAddStaff = async (data: any) => {
     try {
       setLoading(true);
       
-      // In a real app, this would add a staff member to the branch
-      // For demo purposes, we'll simulate a delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await addUser({
+        branch_id: branchId!,
+        user_id: 'new-user-id', // This would be handled by the backend
+        role: data.role,
+        name: data.name,
+        email: data.email,
+        phone: data.phone
+      });
       
       showSuccess('Staff Added', 'Staff member has been added successfully');
       setShowAddStaff(false);
@@ -91,9 +91,14 @@ export default function BranchStaffManagement({ branchId }: BranchStaffManagemen
     try {
       setLoading(true);
       
-      // In a real app, this would update a staff member
-      // For demo purposes, we'll simulate a delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      if (!editingStaff) return;
+      
+      await updateUser(editingStaff.id, {
+        role: data.role,
+        name: data.name,
+        email: data.email,
+        phone: data.phone
+      });
       
       showSuccess('Staff Updated', 'Staff member has been updated successfully');
       setEditingStaff(null);
@@ -112,9 +117,7 @@ export default function BranchStaffManagement({ branchId }: BranchStaffManagemen
     try {
       setLoading(true);
       
-      // In a real app, this would delete a staff member
-      // For demo purposes, we'll simulate a delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await removeUser(staffToDelete);
       
       showSuccess('Staff Removed', 'Staff member has been removed successfully');
       setStaffToDelete(null);
@@ -278,7 +281,7 @@ export default function BranchStaffManagement({ branchId }: BranchStaffManagemen
           <DialogHeader>
             <DialogTitle>Add Staff Member</DialogTitle>
             <DialogDescription>
-              Add a new staff member to {currentBranch.name}
+              Add a new staff member to this branch
             </DialogDescription>
           </DialogHeader>
           

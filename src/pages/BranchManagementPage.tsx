@@ -125,7 +125,7 @@ export default function BranchManagementPage() {
         </TabsContent>
         
         <TabsContent value="staff" className="mt-0">
-          {selectedBranch && <BranchStaffManagement />}
+          {selectedBranch && <BranchStaffManagement branchId={selectedBranch} />}
           {!selectedBranch && (
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 text-center">
               <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />

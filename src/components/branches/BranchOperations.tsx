@@ -9,7 +9,7 @@ import {
   Calendar, 
   Clock, 
   CheckCircle2, 
-  AlertTriangle, 
+  AlertCircle, 
   Search,
   Filter,
   Download,
@@ -142,7 +142,7 @@ export default function BranchOperations() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 p-6 flex items-center justify-center">
         <div className="text-center">
-          <AlertTriangle className="h-12 w-12 text-amber-500 mx-auto mb-4" />
+          <AlertCircle className="h-12 w-12 text-amber-500 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900">No Branch Selected</h3>
           <p className="text-gray-600 mt-1">Please select a branch to view its operations</p>
         </div>
@@ -265,7 +265,7 @@ export default function BranchOperations() {
         <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-medium text-gray-600">Cancelled</h3>
-            <AlertTriangle className="h-4 w-4 text-red-500" />
+            <AlertCircle className="h-4 w-4 text-red-500" />
           </div>
           <p className="text-2xl font-bold text-red-600 mt-2">{summary.cancelled}</p>
           <p className="text-xs text-gray-500">Cancelled</p>
