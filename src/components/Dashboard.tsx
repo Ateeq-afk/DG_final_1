@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Truck,
   Package,
@@ -32,12 +32,22 @@ import RevenuePage from '@/components/revenue/RevenuePage';
 import LoadingForm from '@/components/loading/LoadingForm';
 import UnloadingPage from '@/components/UnloadingPage';
 import LazyBook from './bookings/LazyBook';
+import UserManagementPage from '@/pages/UserManagementPage';
+import { useAuth } from '@/contexts/AuthContext';
+import RequireAuth from './auth/RequireAuth';
 
 export default function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const { userData } = useAuth();
+
+  // Check user role for permissions
+  const isAdmin = userData?.role === 'admin';
+  const isBranchManager = userData?.role === 'branch_manager';
+  const isStaff = userData?.role === 'staff';
+  const isAccountant = userData?.role === 'accountant';
 
   const getCurrentPage = () => {
     const path = location.pathname.split('/')[2] || 'dashboard';
@@ -114,31 +124,54 @@ export default function Dashboard() {
             >
               <Routes>
                 <Route path="/" element={<DashboardStats />} />
-                <Route path="/customers" element={<CustomerList />} />
-                <Route path="/vehicles" element={<VehicleList />} />
-                <Route path="/articles" element={<ArticleList />} />
-                <Route path="/bookings" element={<BookingList />} />
-                <Route path="/bookings/:id" element={<BookingDetails />} />
-                <Route path="/new-booking" element={<LazyBook />} />
-                <Route path="/branches" element={<BranchManagementPage />} />
-                <Route path="/revenue" element={<RevenuePage />} />
-                <Route
-                  path="/loading"
-                  element={
-                    <LoadingForm
-                      organizationId="org1"
-                      onSubmit={async (data) => {
-                        console.log('Loading data submitted:', data);
-                        // Mock implementation
-                        await new Promise((resolve) =>
-                          setTimeout(resolve, 1000)
-                        );
-                      }}
-                      onClose={() => navigate('/dashboard')}
-                    />
-                  }
-                />
-                <Route path="/unloading" element={<UnloadingPage />} />
+                
+                {/* Routes accessible to all except accountants */}
+                {!isAccountant && (
+                  <>
+                    <Route path="/customers" element={<CustomerList />} />
+                    <Route path="/bookings" element={<BookingList />} />
+                    <Route path="/bookings/:id" element={<BookingDetails />} />
+                    <Route path="/new-booking" element={<LazyBook />} />
+                    <Route path="/articles" element={<ArticleList />} />
+                  </>
+                )}
+                
+                {/* Routes accessible only to admin and branch manager */}
+                {(isAdmin || isBranchManager) && (
+                  <>
+                    <Route path="/vehicles" element={<VehicleList />} />
+                    <Route path="/loading" element={
+                      <LoadingForm
+                        organizationId="org1"
+                        onSubmit={async (data) => {
+                          console.log('Loading data submitted:', data);
+                          // Mock implementation
+                          await new Promise((resolve) =>
+                            setTimeout(resolve, 1000)
+                          );
+                        }}
+                        onClose={() => navigate('/dashboard')}
+                      />
+                    } />
+                    <Route path="/unloading" element={<UnloadingPage />} />
+                  </>
+                )}
+                
+                {/* Routes accessible only to admin */}
+                {isAdmin && (
+                  <>
+                    <Route path="/branches" element={<BranchManagementPage />} />
+                    <Route path="/users" element={<UserManagementPage />} />
+                  </>
+                )}
+                
+                {/* Routes accessible to admin and accountant */}
+                {(isAdmin || isAccountant) && (
+                  <Route path="/revenue" element={<RevenuePage />} />
+                )}
+                
+                {/* Fallback route */}
+                <Route path="*" element={<DashboardStats />} />
               </Routes>
             </motion.div>
           </AnimatePresence>
