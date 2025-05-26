@@ -19,7 +19,6 @@ import BookingModification from './BookingModification';
 import BookingCancellation from './BookingCancellation';
 import ProofOfDelivery from './ProofOfDelivery';
 import type { Booking } from '@/types';
-import { useAuth } from '@/contexts/AuthContext';
 
 const DEFAULT_FILTERS = {
   search: '',
@@ -42,7 +41,6 @@ export default function BookingList() {
   
   const navigate = useNavigate();
   const { showSuccess, showError } = useNotificationSystem();
-  const { userData } = useAuth();
 
   const { branches } = useBranches();
   const { bookings, loading, error, updateBookingStatus } = useBookings();
@@ -251,15 +249,6 @@ export default function BookingList() {
     currentPage * itemsPerPage
   );
 
-  // Check user role for permissions
-  const isAdmin = userData?.role === 'admin';
-  const isBranchManager = userData?.role === 'branch_manager';
-  const isStaff = userData?.role === 'staff';
-  const isAccountant = userData?.role === 'accountant';
-  
-  // Only admin, branch manager and staff can modify bookings
-  const canModifyBookings = isAdmin || isBranchManager || isStaff;
-
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 p-6 flex items-center justify-center">
@@ -296,21 +285,17 @@ export default function BookingList() {
             <RefreshCw className="h-4 w-4" />
             Refresh
           </Button>
-          {(isAdmin || isBranchManager || isAccountant) && (
-            <Button variant="outline" className="flex items-center gap-2">
-              <Download className="h-4 w-4" />
-              Export
-            </Button>
-          )}
-          {canModifyBookings && (
-            <Button 
-              className="flex items-center gap-2"
-              onClick={() => navigate('/dashboard/new-booking')}
-            >
-              <Plus className="h-4 w-4" />
-              New Booking
-            </Button>
-          )}
+          <Button variant="outline" className="flex items-center gap-2">
+            <Download className="h-4 w-4" />
+            Export
+          </Button>
+          <Button 
+            className="flex items-center gap-2"
+            onClick={() => navigate('/dashboard/new-booking')}
+          >
+            <Plus className="h-4 w-4" />
+            New Booking
+          </Button>
         </div>
       </div>
 
@@ -488,65 +473,63 @@ export default function BookingList() {
                         <Eye className="h-4 w-4" />
                         <span className="hidden sm:inline">View</span>
                       </Button>
-                      {canModifyBookings && (
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
-                              <MoreVertical className="h-5 w-5" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            {/* Status Update Options */}
-                            {booking.status === 'booked' && (
-                              <DropdownMenuItem onClick={() => handleUpdateStatus(booking.id, 'in_transit')}>
-                                <Truck className="h-4 w-4 mr-2 text-blue-600" />
-                                Mark In Transit
-                              </DropdownMenuItem>
-                            )}
-                            {booking.status === 'in_transit' && (
-                              <DropdownMenuItem onClick={() => setShowPOD(booking.id)}>
-                                <CheckCircle2 className="h-4 w-4 mr-2 text-green-600" />
-                                Mark Delivered
-                              </DropdownMenuItem>
-                            )}
-                            
-                            {/* Edit/Modify Option */}
-                            {(booking.status === 'booked' || booking.status === 'in_transit') && (
-                              <DropdownMenuItem onClick={() => setShowModify(booking.id)}>
-                                <Edit className="h-4 w-4 mr-2" />
-                                Modify Booking
-                              </DropdownMenuItem>
-                            )}
-                            
-                            <DropdownMenuItem onClick={() => handleResendSMS(booking)}>
-                              <Share2 className="h-4 w-4 mr-2" />
-                              Resend SMS
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon">
+                            <MoreVertical className="h-5 w-5" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          {/* Status Update Options */}
+                          {booking.status === 'booked' && (
+                            <DropdownMenuItem onClick={() => handleUpdateStatus(booking.id, 'in_transit')}>
+                              <Truck className="h-4 w-4 mr-2 text-blue-600" />
+                              Mark In Transit
                             </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <Printer className="h-4 w-4 mr-2" />
-                              Print LR
+                          )}
+                          {booking.status === 'in_transit' && (
+                            <DropdownMenuItem onClick={() => setShowPOD(booking.id)}>
+                              <CheckCircle2 className="h-4 w-4 mr-2 text-green-600" />
+                              Mark Delivered
                             </DropdownMenuItem>
-                            <DropdownMenuItem>
-                              <Download className="h-4 w-4 mr-2" />
-                              Download LR
+                          )}
+                          
+                          {/* Edit/Modify Option */}
+                          {(booking.status === 'booked' || booking.status === 'in_transit') && (
+                            <DropdownMenuItem onClick={() => setShowModify(booking.id)}>
+                              <Edit className="h-4 w-4 mr-2" />
+                              Modify Booking
                             </DropdownMenuItem>
-                            
-                            {/* Cancel Option */}
-                            {(booking.status === 'booked' || booking.status === 'in_transit') && (
-                              <>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem 
-                                  onClick={() => setShowCancel(booking.id)}
-                                  className="text-red-600"
-                                >
-                                  <X className="h-4 w-4 mr-2" />
-                                  Cancel Booking
-                                </DropdownMenuItem>
-                              </>
-                            )}
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      )}
+                          )}
+                          
+                          <DropdownMenuItem onClick={() => handleResendSMS(booking)}>
+                            <Share2 className="h-4 w-4 mr-2" />
+                            Resend SMS
+                          </DropdownMenuItem>
+                          <DropdownMenuItem>
+                            <Printer className="h-4 w-4 mr-2" />
+                            Print LR
+                          </DropdownMenuItem>
+                          <DropdownMenuItem>
+                            <Download className="h-4 w-4 mr-2" />
+                            Download LR
+                          </DropdownMenuItem>
+                          
+                          {/* Cancel Option */}
+                          {(booking.status === 'booked' || booking.status === 'in_transit') && (
+                            <>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem 
+                                onClick={() => setShowCancel(booking.id)}
+                                className="text-red-600"
+                              >
+                                <X className="h-4 w-4 mr-2" />
+                                Cancel Booking
+                              </DropdownMenuItem>
+                            </>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </td>
                 </tr>
@@ -562,7 +545,7 @@ export default function BookingList() {
                         ? 'Try adjusting your filters to see more results'
                         : 'Create your first booking to get started'}
                     </p>
-                    {!filters.search && filters.status === 'all' && filters.paymentType === 'all' && filters.branch === 'all' && filters.dateRange === 'all' && canModifyBookings && (
+                    {!filters.search && filters.status === 'all' && filters.paymentType === 'all' && filters.branch === 'all' && filters.dateRange === 'all' && (
                       <Button 
                         onClick={() => navigate('/dashboard/new-booking')} 
                         className="mt-4"
